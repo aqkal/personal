@@ -35,17 +35,17 @@ function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const RH = (v: number) => v * sy;
 
   // ground
-  ctx.fillStyle = "#0c1810";
+  ctx.fillStyle = "#3e7d47";
   ctx.fillRect(0, 0, w, h);
 
   // river
-  ctx.fillStyle = "#14335c";
+  ctx.fillStyle = "#3d7fc0";
   ctx.fillRect(0, Z(41), w, h - Z(41)); // south
   ctx.fillRect(X(44), 0, w - X(44), h); // east
   ctx.fillRect(0, Z(0), X(-44), h - Z(0)); // west reach
 
   // roads
-  ctx.fillStyle = "#4a5168";
+  ctx.fillStyle = "#c6bca9";
   ctx.fillRect(X(-1.8), Z(-42), RW(3.6), RH(84)); // NS
   ctx.fillRect(X(-42), Z(-1.8), RW(84), RH(3.6)); // EW
   for (const px of [-27, 27]) {
@@ -59,18 +59,18 @@ function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fill();
 
   // plaza
-  ctx.fillStyle = "#565f78";
+  ctx.fillStyle = "#c6bca9";
   ctx.beginPath();
   ctx.arc(X(0), Z(0), RW(9.5), 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#2a5f8f";
+  ctx.fillStyle = "#4e94d4";
   ctx.beginPath();
   ctx.arc(X(0), Z(0), RW(2.4), 0, Math.PI * 2);
   ctx.fill();
 
   // trees (tiny dots)
   for (const t of TREES) {
-    ctx.fillStyle = t.kind === "jacaranda" ? "#7a5cc4" : "#1f4a30";
+    ctx.fillStyle = t.kind === "jacaranda" ? "#9d7ce0" : "#2c6e3c";
     ctx.beginPath();
     ctx.arc(X(t.x), Z(t.z), Math.max(1.2, RW(0.9)), 0, Math.PI * 2);
     ctx.fill();

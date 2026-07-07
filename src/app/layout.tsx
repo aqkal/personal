@@ -36,14 +36,14 @@ export const metadata: Metadata = {
     siteName: `${profile.name} · Portfolio`,
     title: `${profile.name} · Software Engineer`,
     description:
-      "Walk through a 3D night-time Brisbane campus built from my resume.",
+      "Walk through a sunny 3D Brisbane campus built from my resume.",
     url: siteUrl,
   },
   twitter: {
     card: "summary_large_image",
     title: `${profile.name} · Software Engineer`,
     description:
-      "Walk through a 3D night-time Brisbane campus built from my resume.",
+      "Walk through a sunny 3D Brisbane campus built from my resume.",
   },
   alternates: {
     canonical: "/",

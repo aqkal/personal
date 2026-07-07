@@ -12,7 +12,7 @@ A dual-interface personal portfolio: a 3D explorable Brisbane campus (three.js /
 - **Dual-host compatibility is non-negotiable**: every change must build for both Vercel and Cloudflare Workers. No Vercel-only or Cloudflare-only APIs, no ISR, route handlers use fetch/Web APIs only. CI builds both targets.
 - **No runtime third-party fetches** (CSP blocks them): no CDN scripts, no drei `Environment` presets, no remote fonts. Fonts via `next/font`; 3D assets procedural or self-hosted.
 - **Content edits happen in `content/*.ts` only.** Rendering reads from `@content` (the validated barrel). Never import raw content files directly.
-- **Keep the game smooth**: no per-frame React state, instancing for repeated meshes, respect the quality ladder in `src/game3d/world.tsx`.
+- **Keep the game smooth**: the world is DAY-ONLY by design. No shadow maps, no postprocessing passes, no point lights, no per-frame React state, instancing for repeated meshes. Read the performance contract in docs/ARCHITECTURE.md before adding anything to the scene.
 
 ## Commands
 

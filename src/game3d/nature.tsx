@@ -1,12 +1,18 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { Instance, Instances, Sparkles, Stars } from "@react-three/drei";
+import { Instance, Instances, Sparkles } from "@react-three/drei";
 import { useMemo, useRef } from "react";
-import type { ShaderMaterial } from "three";
 import * as THREE from "three";
+import type { ShaderMaterial } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { ARCADE, GREAT_COURT, TREES } from "./layout";
+
+/**
+ * Bright Brisbane day. Everything here is built for speed first: no shadow
+ * maps, no postprocessing, blob shadows for grounding, and one draw call per
+ * repeated thing (trees, clouds, bridge parts, skyline).
+ */
 
 /** Deterministic PRNG so scatter and textures are stable across re-renders. */
 export function lcg(seed: number): () => number {
@@ -32,37 +38,86 @@ const skyVertex = /* glsl */ `
 const skyFragment = /* glsl */ `
   varying vec3 vWorld;
   void main() {
-    float h = normalize(vWorld).y;
-    vec3 zenith = vec3(0.012, 0.02, 0.055);
-    vec3 mid = vec3(0.035, 0.055, 0.13);
-    vec3 horizon = vec3(0.11, 0.09, 0.16);
-    vec3 col = mix(mid, zenith, smoothstep(0.12, 0.65, h));
-    col = mix(horizon, col, smoothstep(-0.02, 0.14, h));
-    // warm city glow to the south (+z)
-    float south = smoothstep(0.2, 1.0, normalize(vWorld.xz + vec2(0.0001)).y);
-    col += vec3(0.10, 0.055, 0.03) * south * smoothstep(0.14, -0.05, h);
+    vec3 dir = normalize(vWorld);
+    float h = dir.y;
+    vec3 zenith = vec3(0.20, 0.46, 0.85);
+    vec3 mid = vec3(0.47, 0.71, 0.94);
+    vec3 horizon = vec3(0.84, 0.92, 0.97);
+    vec3 col = mix(mid, zenith, smoothstep(0.15, 0.7, h));
+    col = mix(horizon, col, smoothstep(-0.02, 0.2, h));
+    // warm sun halo (sun sits high in the north-east)
+    vec3 sunDir = normalize(vec3(0.55, 0.62, -0.56));
+    float sun = pow(max(dot(dir, sunDir), 0.0), 220.0);
+    float halo = pow(max(dot(dir, sunDir), 0.0), 8.0);
+    col += vec3(1.0, 0.95, 0.8) * sun * 2.2;
+    col += vec3(0.35, 0.3, 0.18) * halo * 0.4;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
 
-export function NightSky() {
+export function SkyDome() {
   return (
-    <group>
-      <mesh>
-        <sphereGeometry args={[230, 24, 16]} />
-        <shaderMaterial
-          side={THREE.BackSide}
-          depthWrite={false}
-          vertexShader={skyVertex}
-          fragmentShader={skyFragment}
-        />
-      </mesh>
-      <Stars radius={190} depth={40} count={3200} factor={3.4} saturation={0} fade speed={0.5} />
-      {/* moon: emissive enough to bloom, with a halo sprite */}
-      <mesh position={[58, 52, -72]}>
-        <sphereGeometry args={[4.4, 24, 24]} />
-        <meshBasicMaterial color={[2.2, 2.1, 1.75]} toneMapped={false} />
-      </mesh>
+    <mesh>
+      <sphereGeometry args={[230, 24, 16]} />
+      <shaderMaterial
+        side={THREE.BackSide}
+        depthWrite={false}
+        vertexShader={skyVertex}
+        fragmentShader={skyFragment}
+      />
+    </mesh>
+  );
+}
+
+/** Puffy flat-shaded clouds: one merged geometry, one instanced draw call. */
+export function Clouds() {
+  const geometry = useMemo(() => {
+    const puffs = [
+      new THREE.IcosahedronGeometry(2.2, 1),
+      new THREE.IcosahedronGeometry(1.7, 1).translate(2.2, -0.3, 0.4),
+      new THREE.IcosahedronGeometry(1.5, 1).translate(-2.1, -0.4, -0.3),
+      new THREE.IcosahedronGeometry(1.2, 1).translate(0.6, 0.9, -0.6),
+    ];
+    const merged = mergeGeometries(puffs);
+    merged.scale(1, 0.62, 1);
+    return merged;
+  }, []);
+
+  const clouds = useMemo(() => {
+    const r = lcg(777);
+    return Array.from({ length: 11 }, () => ({
+      x: (r() - 0.5) * 220,
+      y: 34 + r() * 22,
+      z: (r() - 0.5) * 220,
+      s: 1.1 + r() * 2.1,
+      rot: r() * Math.PI,
+      speed: 0.4 + r() * 0.5,
+    }));
+  }, []);
+
+  const group = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    const g = group.current;
+    if (!g) return;
+    g.children.forEach((child, i) => {
+      child.position.x += clouds[i % clouds.length].speed * dt;
+      if (child.position.x > 130) child.position.x = -130;
+    });
+  });
+
+  return (
+    <group ref={group}>
+      {clouds.map((c, i) => (
+        <mesh
+          key={i}
+          geometry={geometry}
+          position={[c.x, c.y, c.z]}
+          rotation-y={c.rot}
+          scale={c.s}
+        >
+          <meshLambertMaterial color="#ffffff" emissive="#e8f2fb" emissiveIntensity={0.55} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -75,24 +130,22 @@ function useGroundTexture() {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const ctx = c.getContext("2d")!;
-    ctx.fillStyle = "#182f20";
+    ctx.fillStyle = "#5aa860";
     ctx.fillRect(0, 0, 256, 256);
-    // large soft mottling
     for (let i = 0; i < 60; i++) {
       const g = ctx.createRadialGradient(
         rng() * 256, rng() * 256, 2,
         rng() * 256, rng() * 256, 18 + rng() * 30,
       );
-      const shade = rng() < 0.5 ? "#1d3b28" : "#142819";
+      const shade = rng() < 0.5 ? "#63b569" : "#4f9a55";
       g.addColorStop(0, shade + "cc");
       g.addColorStop(1, shade + "00");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 256, 256);
     }
-    // fine speckle
-    for (let i = 0; i < 1400; i++) {
-      ctx.fillStyle = rng() < 0.5 ? "#20402c" : "#122316";
-      ctx.globalAlpha = 0.25 + rng() * 0.3;
+    for (let i = 0; i < 1200; i++) {
+      ctx.fillStyle = rng() < 0.5 ? "#6ec573" : "#46904d";
+      ctx.globalAlpha = 0.22 + rng() * 0.25;
       ctx.fillRect(rng() * 256, rng() * 256, 1.5, 1.5);
     }
     ctx.globalAlpha = 1;
@@ -107,9 +160,9 @@ function useGroundTexture() {
 export function Ground() {
   const grass = useGroundTexture();
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, -0.02, 0]} receiveShadow>
+    <mesh rotation-x={-Math.PI / 2} position={[0, -0.02, 0]}>
       <planeGeometry args={[220, 220]} />
-      <meshStandardMaterial map={grass} roughness={1} metalness={0} />
+      <meshLambertMaterial map={grass} />
     </mesh>
   );
 }
@@ -122,10 +175,9 @@ function useStoneTexture() {
     const c = document.createElement("canvas");
     c.width = c.height = 128;
     const ctx = c.getContext("2d")!;
-    ctx.fillStyle = "#3f4556";
+    ctx.fillStyle = "#cfc5b4";
     ctx.fillRect(0, 0, 128, 128);
-    // paving joints
-    ctx.strokeStyle = "#333849";
+    ctx.strokeStyle = "#b6ab97";
     ctx.lineWidth = 2;
     for (let y = 0; y <= 128; y += 32) {
       ctx.beginPath();
@@ -142,9 +194,8 @@ function useStoneTexture() {
         ctx.stroke();
       }
     }
-    // wear
     for (let i = 0; i < 300; i++) {
-      ctx.fillStyle = rng() < 0.5 ? "#474d61" : "#383d4d";
+      ctx.fillStyle = rng() < 0.5 ? "#d8cfc0" : "#c2b7a3";
       ctx.globalAlpha = 0.3;
       ctx.fillRect(rng() * 128, rng() * 128, 2, 2);
     }
@@ -156,7 +207,7 @@ function useStoneTexture() {
   }, []);
 }
 
-/** Paths with light curb edges + central plaza, slightly raised. */
+/** Paved paths + central plaza. */
 export function Paths() {
   const stone = useStoneTexture();
   const strips = [
@@ -174,36 +225,32 @@ export function Paths() {
         tex.needsUpdate = true;
         tex.repeat.set(Math.max(1, s.w / 3), Math.max(1, s.d / 3));
         return (
-          <group key={i}>
-            <mesh position={[s.x, 0.02 + i * 0.001, s.z]} rotation-x={-Math.PI / 2} receiveShadow>
-              <planeGeometry args={[s.w, s.d]} />
-              <meshStandardMaterial map={tex} roughness={0.9} metalness={0.05} />
-            </mesh>
-            {/* pale curbs catch the lamp light */}
-            <mesh position={[s.x, 0.028 + i * 0.001, s.z]} rotation-x={-Math.PI / 2}>
-              <ringGeometry args={[0, 0]} />
-              <meshBasicMaterial visible={false} />
-            </mesh>
-          </group>
+          <mesh
+            key={i}
+            position={[s.x, 0.02 + i * 0.001, s.z]}
+            rotation-x={-Math.PI / 2}
+          >
+            <planeGeometry args={[s.w, s.d]} />
+            <meshLambertMaterial map={tex} />
+          </mesh>
         );
       })}
-      {/* plaza disc with a radial ring */}
-      <mesh position={[0, 0.03, 0]} rotation-x={-Math.PI / 2} receiveShadow>
+      <mesh position={[0, 0.03, 0]} rotation-x={-Math.PI / 2}>
         <circleGeometry args={[9.5, 48]} />
-        <meshStandardMaterial map={stone} roughness={0.9} metalness={0.05} />
+        <meshLambertMaterial map={stone} />
       </mesh>
       <mesh position={[0, 0.04, 0]} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[5.6, 5.9, 48]} />
-        <meshStandardMaterial color="#5a6178" roughness={0.8} />
+        <meshLambertMaterial color="#b3a888" />
       </mesh>
-      {/* Great Court lawn (manicured) + inner ring path like the real one */}
-      <mesh position={[GREAT_COURT.center.x, 0.015, -21.5]} rotation-x={-Math.PI / 2} receiveShadow>
+      {/* Great Court lawn + inner ring path */}
+      <mesh position={[GREAT_COURT.center.x, 0.015, -21.5]} rotation-x={-Math.PI / 2}>
         <planeGeometry args={[19, 13]} />
-        <meshStandardMaterial color="#1e4029" roughness={1} />
+        <meshLambertMaterial color="#4f9e58" />
       </mesh>
-      <mesh position={[GREAT_COURT.center.x, 0.022, -21.5]} rotation-x={-Math.PI / 2} receiveShadow>
+      <mesh position={[GREAT_COURT.center.x, 0.022, -21.5]} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[5.2, 6.4, 40]} />
-        <meshStandardMaterial map={stone} roughness={0.9} />
+        <meshLambertMaterial map={stone} />
       </mesh>
     </group>
   );
@@ -248,35 +295,29 @@ const riverFragment = /* glsl */ `
     n += 0.5 * noise(p * 2.3 - vec2(uTime * 0.31, uTime * 0.12));
     n /= 1.5;
 
-    vec3 deep = vec3(0.016, 0.045, 0.10);
-    vec3 lit  = vec3(0.09, 0.19, 0.33);
+    vec3 deep = vec3(0.13, 0.38, 0.62);
+    vec3 lit  = vec3(0.35, 0.62, 0.84);
     vec3 col = mix(deep, lit, n);
 
-    // fresnel: grazing angles pick up the sky
+    // fresnel: grazing angles pick up the bright sky
     vec3 viewDir = normalize(cameraPosition - vWorld);
     float fresnel = pow(1.0 - max(viewDir.y, 0.0), 3.0);
-    col += vec3(0.06, 0.09, 0.16) * fresnel;
+    col += vec3(0.32, 0.4, 0.45) * fresnel;
 
-    // moon glint streak
-    float streak = smoothstep(0.972, 1.0, sin(vWorld.x * 0.85 + n * 3.0 + uTime * 0.6));
-    col += vec3(1.2, 1.12, 0.9) * streak * (0.35 + 0.65 * fresnel);
+    // sun sparkle
+    float sparkle = smoothstep(0.965, 1.0, sin(vWorld.x * 0.9 + n * 3.4 + uTime * 0.8));
+    col += vec3(1.0, 0.97, 0.85) * sparkle * (0.35 + 0.5 * fresnel);
 
-    // city glow reflection strengthens toward the far bank
-    float glow = smoothstep(30.0, 60.0, vWorld.z) * (0.4 + 0.6 * n);
-    col += vec3(0.16, 0.11, 0.15) * glow;
-
-    // soft foam along plane edges (banks); far edges hide in fog
+    // soft foam along the banks
     float edge = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
     float foam = smoothstep(0.045, 0.0, edge) * (0.5 + 0.5 * noise(p * 6.0 + uTime * 0.4));
-    col += vec3(0.35, 0.42, 0.5) * foam * 0.35;
+    col += vec3(0.85, 0.9, 0.94) * foam * 0.45;
 
     gl_FragColor = vec4(col, 1.0);
   }
 `;
 
 export function River() {
-  // one uniforms object shared by all three reaches; ticking it once
-  // animates every plane
   const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
   const matRef = useRef<ShaderMaterial>(null);
   useFrame((_, dt) => {
@@ -284,7 +325,6 @@ export function River() {
   });
   return (
     <group>
-      {/* south reach */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.12, 52]}>
         <planeGeometry args={[220, 22]} />
         <shaderMaterial
@@ -294,23 +334,13 @@ export function River() {
           uniforms={uniforms}
         />
       </mesh>
-      {/* east reach (the St Lucia bend) */}
       <mesh rotation-x={-Math.PI / 2} position={[55, -0.12, 0]}>
         <planeGeometry args={[22, 120]} />
-        <shaderMaterial
-          vertexShader={riverVertex}
-          fragmentShader={riverFragment}
-          uniforms={uniforms}
-        />
+        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} />
       </mesh>
-      {/* west bank hint */}
       <mesh rotation-x={-Math.PI / 2} position={[-55, -0.12, 30]}>
         <planeGeometry args={[22, 60]} />
-        <shaderMaterial
-          vertexShader={riverVertex}
-          fragmentShader={riverFragment}
-          uniforms={uniforms}
-        />
+        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} />
       </mesh>
     </group>
   );
@@ -318,125 +348,91 @@ export function River() {
 
 /* ---------------------------------- skyline + bridge ---------------------------------- */
 
-function useWindowsTexture(hue: string) {
-  return useMemo(() => {
-    const rng = lcg(9021);
-    const c = document.createElement("canvas");
-    c.width = 32;
-    c.height = 64;
-    const ctx = c.getContext("2d")!;
-    ctx.fillStyle = "#05070d";
-    ctx.fillRect(0, 0, 32, 64);
-    for (let y = 2; y < 62; y += 4) {
-      for (let x = 2; x < 30; x += 4) {
-        if (rng() < 0.42) {
-          ctx.fillStyle = rng() < 0.75 ? hue : "#8fb7d9";
-          ctx.globalAlpha = 0.55 + rng() * 0.45;
-          ctx.fillRect(x, y, 2, 2);
-        }
-      }
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }, [hue]);
-}
-
-/** Distant Brisbane CBD across the water. */
+/** Distant Brisbane CBD in daylight haze: three instanced draw calls total. */
 export function Skyline() {
-  const windows = useWindowsTexture("#ffd98a");
   const towers = useMemo(() => {
     const rng = lcg(99);
     return Array.from({ length: 26 }, (_, i) => {
       const x = -95 + i * 7.5 + rng() * 4;
       const h = 10 + rng() * 26 + (Math.abs(x) < 30 ? 10 : 0);
+      const shade = 0.72 + rng() * 0.2;
       return {
         x,
         h,
         w: 4.5 + rng() * 3.5,
         z: 78 + rng() * 10,
         antenna: rng() < 0.3,
+        color: new THREE.Color(shade * 0.78, shade * 0.85, shade * 0.95),
       };
     });
   }, []);
+  const withAntenna = towers.filter((t) => t.antenna);
   return (
     <group>
-      {towers.map((t, i) => (
-        <group key={i} position={[t.x, 0, t.z]}>
-          <mesh position={[0, t.h / 2 - 0.1, 0]}>
-            <boxGeometry args={[t.w, t.h, t.w]} />
-            <meshStandardMaterial
-              color="#0a0f1c"
-              emissiveMap={windows}
-              emissive="#ffffff"
-              emissiveIntensity={1.35}
-              roughness={0.9}
-            />
-          </mesh>
-          {t.antenna && (
-            <>
-              <mesh position={[0, t.h + 2, 0]}>
-                <cylinderGeometry args={[0.08, 0.14, 4, 5]} />
-                <meshStandardMaterial color="#161b2c" roughness={0.8} />
-              </mesh>
-              <mesh position={[0, t.h + 4.1, 0]}>
-                <sphereGeometry args={[0.22, 8, 8]} />
-                <meshBasicMaterial color={[2.4, 0.35, 0.3]} toneMapped={false} />
-              </mesh>
-            </>
-          )}
-        </group>
-      ))}
+      <Instances limit={towers.length}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial />
+        {towers.map((t, i) => (
+          <Instance
+            key={i}
+            position={[t.x, t.h / 2 - 0.1, t.z]}
+            scale={[t.w, t.h, t.w]}
+            color={t.color}
+          />
+        ))}
+      </Instances>
+      <Instances limit={withAntenna.length}>
+        <cylinderGeometry args={[0.08, 0.14, 4, 5]} />
+        <meshLambertMaterial color="#8b96ad" />
+        {withAntenna.map((t, i) => (
+          <Instance key={i} position={[t.x, t.h + 2, t.z]} />
+        ))}
+      </Instances>
       {/* far-bank strip */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.05, 74]}>
         <planeGeometry args={[240, 26]} />
-        <meshStandardMaterial color="#0b1018" roughness={1} />
+        <meshLambertMaterial color="#9cb89a" />
       </mesh>
     </group>
   );
 }
 
-/** Story Bridge silhouette: steel arch with a string of lights. */
+/** Story Bridge silhouette: instanced steelwork, a handful of draw calls. */
 export function Bridge() {
-  const lights = useMemo(() => {
-    const pts: Array<[number, number, number]> = [];
+  const arch = useMemo(() => {
+    const pts: Array<{ y: number; z: number }> = [];
     for (let i = 0; i <= 22; i++) {
       const t = i / 22;
-      const z = 43 + t * 15;
-      const y = 1.4 + Math.sin(t * Math.PI) * 4.6;
-      pts.push([0, y, z]);
+      pts.push({ z: 43 + t * 15, y: 1.4 + Math.sin(t * Math.PI) * 4.6 });
     }
     return pts;
   }, []);
   return (
     <group>
-      <mesh position={[0, 0.06, 50]} receiveShadow>
+      <mesh position={[0, 0.06, 50]}>
         <boxGeometry args={[4.6, 0.24, 16]} />
-        <meshStandardMaterial color="#2c3244" roughness={0.85} />
+        <meshLambertMaterial color="#8d9aae" />
       </mesh>
       {[-2.1, 2.1].map((x) => (
         <mesh key={x} position={[x, 0.7, 50]}>
           <boxGeometry args={[0.16, 1.1, 16]} />
-          <meshStandardMaterial color="#3c4358" roughness={0.7} />
+          <meshLambertMaterial color="#77839a" />
         </mesh>
       ))}
-      {[-2.1, 2.1].map((x) =>
-        lights.map(([, y, z], i) => (
-          <mesh key={`${x}-${i}`} position={[x, y, z]}>
-            <boxGeometry args={[0.14, 0.5, 0.7]} />
-            <meshStandardMaterial color="#454e68" roughness={0.6} />
-          </mesh>
-        )),
-      )}
-      {lights.map(([, y, z], i) => (
-        <mesh key={i} position={[0, y + 0.4, z]}>
-          <sphereGeometry args={[0.11, 8, 8]} />
-          <meshBasicMaterial color={[2.4, 1.9, 1.1]} toneMapped={false} />
-        </mesh>
-      ))}
-      <mesh position={[0, 0.04, 58.5]} receiveShadow>
+      {/* steel arch segments: one instanced call for both sides */}
+      <Instances limit={arch.length * 2}>
+        <boxGeometry args={[0.14, 0.5, 0.7]} />
+        <meshLambertMaterial color="#95a2b8" />
+        {[-2.1, 2.1].flatMap((x) =>
+          arch.map((p, i) => (
+            <Instance key={`${x}-${i}`} position={[x, p.y, p.z]} />
+          )),
+        )}
+      </Instances>
+      {/* lookout deck */}
+      <mesh position={[0, 0.04, 58.5]}>
         <cylinderGeometry args={[7, 7, 0.2, 24]} />
-        <meshStandardMaterial color="#2c3244" roughness={0.85} />
+        <meshLambertMaterial color="#aab4c4" />
       </mesh>
     </group>
   );
@@ -444,115 +440,93 @@ export function Bridge() {
 
 /* ---------------------------------- trees ---------------------------------- */
 
-const JAC_SHADES = ["#8e6fd8", "#9d7ce0", "#7a5cc4", "#a98ceb"];
-const FIG_SHADES = ["#24513a", "#1d422f", "#2c5f44"];
+const JAC_SHADES = ["#9d7ce0", "#a98ceb", "#8a68d4", "#b598f2"];
+const FIG_SHADES = ["#3f7d4a", "#356e40", "#4a8f55"];
+
+// pure derivations of the module-constant TREES: computed once at load
+const JACS = TREES.filter((t) => t.kind === "jacaranda");
+
+const TRUNK_ROTATIONS = (() => {
+  const r = lcg(515);
+  return TREES.map(
+    () => [0, r() * Math.PI, (r() - 0.5) * 0.12] as [number, number, number],
+  );
+})();
+
+const PUFFS = (() => {
+  const r = lcg(881);
+  return TREES.flatMap((t, i) => {
+    const shades = t.kind === "jacaranda" ? JAC_SHADES : FIG_SHADES;
+    const spread = t.kind === "jacaranda" ? 1.9 : 2.6;
+    return Array.from({ length: 4 }, (_, k) => ({
+      key: `${i}-${k}`,
+      pos: [
+        t.x + (r() - 0.5) * spread * t.s,
+        (2.5 + r() * 1.1) * t.s,
+        t.z + (r() - 0.5) * spread * t.s,
+      ] as [number, number, number],
+      scale: (0.9 + r() * 0.8) * t.s,
+      color: shades[Math.floor(r() * shades.length)],
+    }));
+  });
+})();
 
 /**
- * Jacarandas (UQ's purple signature) + Moreton Bay figs. Canopies are
- * multi-puff instanced clusters with per-instance shade jitter; jacarandas
- * drop a blossom carpet.
+ * Jacarandas in full bloom + Moreton Bay figs. Multi-puff instanced
+ * canopies, blossom carpets, and instanced blob shadows for grounding.
  */
 export function TreeField() {
-  const jacs = TREES.filter((t) => t.kind === "jacaranda");
-  const figs = TREES.filter((t) => t.kind === "fig");
-  const rng = useMemo(() => lcg(515), []);
-
-  const jacPuffs = useMemo(() => {
-    const r = lcg(881);
-    return jacs.flatMap((t, i) =>
-      Array.from({ length: 4 }, (_, k) => ({
-        key: `${i}-${k}`,
-        pos: [
-          t.x + (r() - 0.5) * 1.9 * t.s,
-          (2.6 + r() * 1.1) * t.s,
-          t.z + (r() - 0.5) * 1.9 * t.s,
-        ] as [number, number, number],
-        scale: (0.85 + r() * 0.75) * t.s,
-        color: JAC_SHADES[Math.floor(r() * JAC_SHADES.length)],
-      })),
-    );
-  }, [jacs]);
-
-  const figPuffs = useMemo(() => {
-    const r = lcg(212);
-    return figs.flatMap((t, i) =>
-      Array.from({ length: 4 }, (_, k) => ({
-        key: `${i}-${k}`,
-        pos: [
-          t.x + (r() - 0.5) * 2.6 * t.s,
-          (2.4 + r() * 1.0) * t.s,
-          t.z + (r() - 0.5) * 2.6 * t.s,
-        ] as [number, number, number],
-        scale: (1.0 + r() * 0.8) * t.s,
-        color: FIG_SHADES[Math.floor(r() * FIG_SHADES.length)],
-      })),
-    );
-  }, [figs]);
-
   return (
     <group>
       {/* trunks */}
-      <Instances limit={TREES.length} castShadow>
+      <Instances limit={TREES.length}>
         <cylinderGeometry args={[0.16, 0.3, 2.6, 7]} />
-        <meshStandardMaterial color="#4a3a2c" roughness={1} />
+        <meshLambertMaterial color="#6d5137" />
         {TREES.map((t, i) => (
           <Instance
             key={i}
             position={[t.x, 1.3 * t.s, t.z]}
             scale={[t.s, t.s, t.s]}
-            rotation={[0, rng() * Math.PI, (rng() - 0.5) * 0.12]}
+            rotation={TRUNK_ROTATIONS[i]}
           />
         ))}
       </Instances>
-      {/* branches (one tilted limb per tree) */}
-      <Instances limit={TREES.length} castShadow>
-        <cylinderGeometry args={[0.07, 0.12, 1.6, 5]} />
-        <meshStandardMaterial color="#41332a" roughness={1} />
-        {TREES.map((t, i) => (
-          <Instance
-            key={i}
-            position={[t.x + 0.4 * t.s, 2.3 * t.s, t.z]}
-            rotation={[0, rng() * Math.PI * 2, 0.7]}
-            scale={[t.s, t.s, t.s]}
-          />
-        ))}
-      </Instances>
-      {/* jacaranda canopy puffs */}
-      <Instances limit={jacPuffs.length} castShadow>
-        <icosahedronGeometry args={[1.3, 1]} />
-        <meshStandardMaterial roughness={0.9} />
-        {jacPuffs.map((p) => (
+      {/* canopy puffs (all trees, one call) */}
+      <Instances limit={PUFFS.length}>
+        <icosahedronGeometry args={[1.35, 1]} />
+        <meshLambertMaterial />
+        {PUFFS.map((p) => (
           <Instance
             key={p.key}
             position={p.pos}
-            scale={[p.scale * 1.25, p.scale * 0.9, p.scale * 1.25]}
-            color={p.color}
-          />
-        ))}
-      </Instances>
-      {/* fig canopy puffs */}
-      <Instances limit={figPuffs.length} castShadow>
-        <icosahedronGeometry args={[1.4, 1]} />
-        <meshStandardMaterial roughness={1} />
-        {figPuffs.map((p) => (
-          <Instance
-            key={p.key}
-            position={p.pos}
-            scale={[p.scale * 1.4, p.scale * 0.85, p.scale * 1.4]}
+            scale={[p.scale * 1.3, p.scale * 0.9, p.scale * 1.3]}
             color={p.color}
           />
         ))}
       </Instances>
       {/* blossom carpets under jacarandas */}
-      <Instances limit={jacs.length}>
+      <Instances limit={JACS.length}>
         <circleGeometry args={[1.9, 20]} />
-        <meshBasicMaterial color="#5d4494" transparent opacity={0.4} depthWrite={false} />
-        {jacs.map((t, i) => (
+        <meshBasicMaterial color="#b7a3e8" transparent opacity={0.55} depthWrite={false} />
+        {JACS.map((t, i) => (
           <Instance
             key={i}
             position={[t.x, 0.035, t.z]}
             rotation={[-Math.PI / 2, 0, 0]}
             scale={[t.s, t.s, 1]}
+          />
+        ))}
+      </Instances>
+      {/* blob shadows (cheap grounding without a shadow map) */}
+      <Instances limit={TREES.length}>
+        <circleGeometry args={[1.7, 16]} />
+        <meshBasicMaterial color="#1c3822" transparent opacity={0.22} depthWrite={false} />
+        {TREES.map((t, i) => (
+          <Instance
+            key={i}
+            position={[t.x + 0.5, 0.028, t.z + 0.4]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            scale={[t.s * 1.2, t.s, 1]}
           />
         ))}
       </Instances>
@@ -564,17 +538,16 @@ export function TreeField() {
 
 function tuftReject(x: number, z: number): boolean {
   if (Math.abs(x) > 42 || z < -40 || z > 39) return true;
-  if (Math.abs(x) < 3.2 && Math.abs(z) < 42) return true; // NS road
-  if (Math.abs(z) < 3.2) return true; // EW road
-  if (Math.abs(x + 27) < 2.6 || Math.abs(x - 27) < 2.6) return true; // spurs
-  if (x * x + z * z < 110) return true; // plaza
+  if (Math.abs(x) < 3.2 && Math.abs(z) < 42) return true;
+  if (Math.abs(z) < 3.2) return true;
+  if (Math.abs(x + 27) < 2.6 || Math.abs(x - 27) < 2.6) return true;
+  if (x * x + z * z < 110) return true;
   if (
     Math.abs(x - ARCADE.x) < ARCADE.hw + 2 &&
     Math.abs(z - ARCADE.z) < ARCADE.hd + 3
   )
     return true;
-  if (Math.abs(x - GREAT_COURT.center.x) < 14 && z > -32 && z < -12)
-    return true; // court interior + wings
+  if (Math.abs(x - GREAT_COURT.center.x) < 14 && z > -32 && z < -12) return true;
   return false;
 }
 
@@ -606,8 +579,7 @@ export function GrassTufts() {
       ctx.quadraticCurveTo(bx + (r() - 0.5) * 10, 24, bx + (r() - 0.5) * 16, 4 + r() * 8);
       ctx.stroke();
     }
-    const tex = new THREE.CanvasTexture(c);
-    return tex;
+    return new THREE.CanvasTexture(c);
   }, []);
 
   const spots = useMemo(() => {
@@ -624,7 +596,7 @@ export function GrassTufts() {
         z,
         s: 0.7 + r() * 0.9,
         rot: r() * Math.PI,
-        shade: r() < 0.5 ? "#2c5c3c" : "#234b30",
+        shade: r() < 0.5 ? "#4f9e58" : "#3f8a49",
       });
     }
     return out;
@@ -632,12 +604,11 @@ export function GrassTufts() {
 
   return (
     <Instances limit={spots.length} geometry={geometry} frustumCulled={false}>
-      <meshStandardMaterial
+      <meshLambertMaterial
         alphaMap={alphaMap}
         transparent
         alphaTest={0.35}
         side={THREE.DoubleSide}
-        roughness={1}
       />
       {spots.map((t, i) => (
         <Instance
@@ -654,12 +625,12 @@ export function GrassTufts() {
 
 /* ---------------------------------- ambience ---------------------------------- */
 
-export function Fireflies() {
+/** Butterflies over the garden and riverbank (daytime fireflies). */
+export function Butterflies() {
   return (
     <group>
-      <Sparkles count={34} position={[-27, 1.6, 22]} scale={[14, 2.5, 14]} size={2.6} speed={0.28} color="#c8ff9d" />
-      <Sparkles count={26} position={[0, 1.4, 46]} scale={[30, 2, 10]} size={2.2} speed={0.22} color="#9dd8ff" />
-      <Sparkles count={20} position={[-27, 2, -22]} scale={[16, 3, 10]} size={2} speed={0.2} color="#d8c8ff" />
+      <Sparkles count={22} position={[-27, 1.8, 22]} scale={[14, 2.5, 14]} size={2.4} speed={0.35} color="#ffe28a" />
+      <Sparkles count={16} position={[0, 1.6, 46]} scale={[26, 2, 8]} size={2} speed={0.3} color="#ffffff" />
     </group>
   );
 }

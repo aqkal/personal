@@ -4,13 +4,6 @@ import Link from "next/link";
 import { motion as m, useReducedMotion } from "motion/react";
 import { profile } from "@content";
 
-/** Deterministic star field - fixed coords so SSR/client markup match. */
-const STARS = [
-  [8, 12], [18, 30], [26, 8], [34, 22], [45, 15], [55, 6], [63, 26],
-  [72, 12], [81, 32], [90, 18], [12, 45], [30, 40], [50, 38], [68, 44],
-  [86, 42], [22, 55], [42, 52], [60, 58], [78, 52], [94, 60],
-] as const;
-
 const entrance = {
   hidden: { opacity: 0, y: 26 },
   show: (i: number) => ({
@@ -24,45 +17,41 @@ function GameScene() {
   return (
     <div
       aria-hidden
-      className="absolute inset-0 overflow-hidden bg-gradient-to-b from-[#0a1030] via-[#141b45] to-[#1c2a5e]"
+      className="absolute inset-0 overflow-hidden bg-gradient-to-b from-[#5ba3e0] via-[#8ec4ec] to-[#c8e4f6]"
     >
-      {/* stars */}
-      {STARS.map(([x, y], i) => (
-        <span
-          key={i}
-          className="absolute size-[3px] rounded-[1px] bg-white/80 motion-safe:animate-twinkle"
-          style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${(i % 5) * 0.5}s` }}
-        />
-      ))}
-      {/* moon */}
-      <div className="absolute right-[12%] top-[12%] size-8 rounded-sm bg-amber shadow-[0_0_32px_8px_rgba(255,200,87,0.4)] sm:size-10" />
+      {/* sun */}
+      <div className="absolute right-[14%] top-[12%] size-9 rounded-full bg-[#ffe9a3] shadow-[0_0_36px_10px_rgba(255,226,138,0.55)] sm:size-11" />
       {/* drifting clouds */}
-      <div className="absolute left-0 top-[22%] h-4 w-24 rounded-sm bg-white/10 motion-safe:animate-drift" />
+      <div className="absolute left-0 top-[18%] h-5 w-28 rounded-full bg-white/85 motion-safe:animate-drift" />
       <div
-        className="absolute left-0 top-[38%] h-3 w-16 rounded-sm bg-white/8 motion-safe:animate-drift-slow"
+        className="absolute left-0 top-[34%] h-4 w-20 rounded-full bg-white/70 motion-safe:animate-drift-slow"
         style={{ animationDelay: "-18s" }}
       />
-      {/* mountains */}
+      {/* distant skyline */}
       <div
-        className="absolute bottom-[26%] left-0 h-[34%] w-full bg-[#0e1638]"
-        style={{ clipPath: "polygon(0 100%, 12% 38%, 26% 78%, 40% 22%, 55% 70%, 70% 30%, 84% 74%, 100% 45%, 100% 100%)" }}
+        className="absolute bottom-[26%] left-0 h-[30%] w-full bg-[#9db4d4]"
+        style={{ clipPath: "polygon(0 100%, 8% 55%, 14% 55%, 18% 30%, 24% 30%, 28% 62%, 38% 62%, 42% 18%, 50% 18%, 54% 48%, 64% 48%, 68% 34%, 76% 34%, 80% 58%, 90% 58%, 94% 42%, 100% 42%, 100% 100%)" }}
       />
-      {/* ground */}
-      <div className="absolute bottom-0 h-[28%] w-full bg-gradient-to-b from-[#1c4d35] to-[#12331f]">
-        <div className="h-[3px] w-full bg-neon/40" />
+      {/* river strip + lawn */}
+      <div className="absolute bottom-[22%] h-[6%] w-full bg-[#4e94d4]" />
+      <div className="absolute bottom-0 h-[22%] w-full bg-gradient-to-b from-[#63b569] to-[#4f9a55]" />
+      {/* jacaranda */}
+      <div className="absolute bottom-[19%] left-[12%]">
+        <div className="size-7 rounded-full bg-[#9d7ce0]" />
+        <div className="mx-auto h-4 w-1.5 bg-[#6d5137]" />
       </div>
-      {/* pixel character */}
-      <div className="absolute bottom-[24%] left-[44%] motion-safe:animate-float">
-        <div className="mx-auto size-3.5 rounded-[2px] bg-[#f2c89b]" />
-        <div className="mx-auto h-4 w-5 rounded-[2px] bg-neon" />
+      {/* character */}
+      <div className="absolute bottom-[8%] left-[46%] motion-safe:animate-float">
+        <div className="mx-auto size-3.5 rounded-full bg-[#f2c89b]" />
+        <div className="mx-auto h-4 w-5 rounded-[3px] bg-[#6a3ba3]" />
         <div className="mx-auto flex gap-0.5">
           <div className="h-2.5 w-2 rounded-[1px] bg-[#26324f]" />
           <div className="h-2.5 w-2 rounded-[1px] bg-[#26324f]" />
         </div>
-        <div className="mx-auto mt-1 h-1 w-6 rounded-full bg-black/40 blur-[1px]" />
+        <div className="mx-auto mt-1 h-1 w-6 rounded-full bg-black/25 blur-[1px]" />
       </div>
-      {/* arcade glow on the horizon */}
-      <div className="absolute bottom-[26%] right-[14%] h-8 w-6 rounded-sm bg-magenta/80 shadow-[0_0_22px_4px_rgba(255,107,214,0.5)]" />
+      {/* arcade accent on the lawn */}
+      <div className="absolute bottom-[9%] right-[16%] h-8 w-6 rounded-sm bg-magenta/85 shadow-[0_0_18px_3px_rgba(255,107,214,0.4)]" />
     </div>
   );
 }

@@ -34,9 +34,9 @@ src/app/page.tsx -> HomeShell (client)
 ### 3. 3D world (`src/game3d/`)
 
 - `layout.ts`: pure data. Zone rectangles, anchor slots, the content -> structure mapping (`OFFICES`, `CABINETS`, `CRYSTALS`, `INTERACTABLES`), colliders, and the walkable-area function. No three.js imports, unit-testable.
-- `world.tsx`: the R3F `<Canvas>`: lighting rig (ambient + hemisphere + shadow-casting moon directional + 7 accent point lights), fog, postprocessing (N8AO ambient occlusion + Bloom + Vignette + SMAA), quality ladder.
-- `nature.tsx`: gradient sky dome, ground, paved paths, river (custom shader with fresnel, moon glint, edge foam), Brisbane skyline, bridge, instanced multi-puff trees with blossom carpets, instanced grass tufts, fireflies.
-- `buildings.tsx`: the enclosed Great Court (sandstone brick textures, cloister colonnades, arched lit windows, south gate, clock tower), office towers, café, post office, arcade, crystals, fountain, street lamps, proximity-aware HTML labels.
+- `world.tsx`: the R3F `<Canvas>`. The ENTIRE lighting rig is one hemisphere light + one directional sun: no shadow maps, no postprocessing passes (see the performance contract below). Quality ladder adjusts device pixel ratio only.
+- `nature.tsx`: day sky dome with sun halo, drifting instanced clouds, ground, paved paths, river (custom shader with fresnel, sun sparkle, edge foam), Brisbane skyline (instanced), bridge (instanced steelwork), instanced multi-puff trees with jacaranda blossom carpets and blob shadows, instanced grass tufts, butterflies.
+- `buildings.tsx`: the enclosed Great Court (sandstone brick textures, cloister colonnades, arched windows, south gate, clock tower), glass office towers, café, post office, arcade, crystals, fountain, street lamps, proximity-aware HTML labels, instanced structure blob shadows.
 - `player.tsx`: character meshes, procedural walk cycle, collision-aware camera-relative movement, orbitable third-person camera with a cinematic fly-in.
 - `camera-controls.tsx`: drag to orbit, wheel/pinch to zoom, any input skips the intro.
 - `interactions.tsx` + `target-ring.tsx`: proximity detection -> hint chips + pulsing ground ring -> panel open.
@@ -58,14 +58,31 @@ The same repo deploys to Vercel (native) and Cloudflare Workers (`@opennextjs/cl
 - Headers/redirects live in `next.config.ts` `headers()`, honored by both.
 - No runtime fetches to third-party CDNs (also enforced by CSP): fonts are self-hosted via `next/font`, 3D assets are procedural.
 
-## Performance budget
+## Performance contract (the reason it is a day scene)
 
-- Landing and classic pages ship zero game code; three.js loads only after the visitor picks Game mode (dynamic import in `HomeShell` / `GameShell`).
-- Trees, lamps, light pools, and skyline towers are instanced (single-digit draw calls for hundreds of objects).
-- Per-frame data lives in refs/module state; React re-renders only on discrete events (panel open/close, hints).
-- Bloom uses a single camera-level pass; emissive materials (`toneMapped={false}`, intensity > 1) are the only bloom sources.
-- Quality ladder (`PerformanceMonitor`): full (dpr 2 + effects) -> reduced (dpr 1.25) -> minimal (no postprocessing). Software rasterizers (SwiftShader etc.) are detected at boot and pinned to the floor tier with shadows off.
-- `prefers-reduced-motion` disables fireflies and effects and is respected by the landing chooser.
+The user-facing rule is "never lags". The scene is engineered like the fast
+playful WebGL portfolios (bruno-simon.com school): brightness over
+brute-force lighting.
+
+- NO shadow maps (blob-shadow discs ground every object), NO postprocessing
+  passes (native MSAA does the antialiasing), NO point lights. Two lights
+  total: hemisphere sky bounce + directional sun.
+- Landing and classic pages ship zero game code; three.js loads only after
+  the visitor picks Game mode (dynamic import in `HomeShell` / `GameShell`).
+- Everything repeated is instanced: trees, canopy puffs, blossom carpets,
+  blob shadows, grass tufts, clouds, lamps, bridge steel, skyline towers,
+  cloister columns. Single-digit draw calls for hundreds of objects.
+- Cheap materials everywhere: Lambert/Basic, canvas textures, one custom
+  shader (river) and one (sky dome).
+- Per-frame data lives in refs/module state; React re-renders only on
+  discrete events (panel open/close, hints, proximity labels).
+- Quality ladder (`PerformanceMonitor`) adjusts dpr [1, 1.75] -> [0.75, 1].
+  Software rasterizers (SwiftShader etc.) are detected at boot and pinned to
+  a low-dpr floor with tufts/butterflies off.
+- `prefers-reduced-motion` skips the intro fly-in, clouds, and butterflies.
+
+Anything added to the world must respect this contract: no new lights, no
+shadow maps, no fullscreen passes, instanced if repeated.
 
 ## Swapping in real 3D assets later
 

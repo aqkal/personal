@@ -4,14 +4,14 @@
 
 A personal portfolio website for a University of Queensland Software Engineering student, built as an interactive experience rather than a static page. The site presents two interfaces on landing:
 
-1. **Game world (live)**: a stylized 3D night scene inspired by UQ's St Lucia campus and Brisbane. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
+1. **Game world (live)**: a stylized 3D scene of a sunny Brisbane day, inspired by UQ's St Lucia campus. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
 2. **Terminal (v2, planned)**: a command-line interface over the same content. The landing page shows it as a teaser; `src/terminal/` is reserved for it.
 
 There is always a third path: the **classic site** (`/about`, `/experience`, `/projects`, `/blog`, `/contact`, `/resume`). This is what crawlers index, what reduced-motion users get offered, and what recruiters in a hurry click.
 
 ## The world, briefly
 
-- **UQ Campus** (north-west): an enclosed sandstone Great Court (brick coursing, cloister colonnades, arched lit windows, a south entrance gate) with a clock tower, jacaranda trees dropping blossom carpets, and a scholarship plaque. Interacting at the gate opens the education panel.
+- **UQ Campus** (north-west): an enclosed sandstone Great Court (brick coursing, cloister colonnades, arched windows, a south entrance gate) with a clock tower, jacaranda trees dropping blossom carpets, and a scholarship plaque. Interacting at the gate opens the education panel.
 - **Career District** (north-east): one lit office tower per work experience entry.
 - **Project Arcade** (south-east): one neon arcade cabinet per project. One extra cabinet has no label; it plays Snake, with a persistent high score.
 - **Skills Garden** (south-west): one floating crystal per skill category.
@@ -21,7 +21,7 @@ There is always a third path: the **classic site** (`/about`, `/experience`, `/p
 ## Design principles
 
 1. **One source of truth.** All resume content lives in `content/*.ts`, validated by Zod. The 3D world, the classic pages, the resume page, and (later) the terminal all render from the same objects. Editing content never requires touching rendering code.
-2. **Never lag.** Smoothness beats spectacle. The 3D bundle loads only when chosen, heavy objects are instanced, per-frame data avoids React state, and a quality ladder degrades resolution and effects before frame rate.
+2. **Never lag.** Smoothness beats spectacle, which is why the world is a bright day scene: no shadow maps, no postprocessing, two lights, everything instanced (see the performance contract in ARCHITECTURE.md). The 3D bundle loads only when chosen, per-frame data avoids React state, and a quality ladder degrades resolution before frame rate.
 3. **Dual-host by construction.** The same codebase deploys to Vercel and Cloudflare Workers. Anything host-exclusive is banned (see ARCHITECTURE.md).
 4. **Security and privacy by default.** Strict headers, a hardened contact endpoint, cookieless analytics, no database, no stored user data.
 5. **No em dashes in any copy.** Owner's style rule; use commas, colons, or hyphens.

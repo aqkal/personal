@@ -38,8 +38,7 @@ export function TargetRing() {
       <ringGeometry args={[1.05, 1.3, 40]} />
       <meshBasicMaterial
         ref={mat}
-        color={[0.6, 2.2, 1.1]}
-        toneMapped={false}
+        color="#12b76a"
         transparent
         opacity={0}
         depthWrite={false}

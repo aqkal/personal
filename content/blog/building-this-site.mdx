@@ -8,12 +8,12 @@ draft: false
 
 Most portfolios are a scroll. I wanted mine to be a place.
 
-So this site boots into a stylized 3D night scene inspired by my actual campus: the University of Queensland's sandstone Great Court, jacarandas in bloom, street lamps along the paths, and the Brisbane river wrapping the whole thing with the city lights across the water. You walk around as a small student character. My internships are office towers you approach, my projects are arcade cabinets (one of them is secretly playable), and my skills grow in a garden.
+So this site boots into a stylized 3D scene of a sunny Brisbane day, inspired by my actual campus: the University of Queensland's sandstone Great Court, jacarandas in full bloom, and the Brisbane river wrapping the whole thing with the city skyline across the water. You walk around as a small student character. My internships are office towers you approach, my projects are arcade cabinets (one of them is secretly playable), and my skills grow in a garden.
 
 ## The stack
 
 - **Next.js 16** (App Router) with **TypeScript** and **Tailwind CSS v4**
-- **Three.js** via **React Three Fiber** for the world, with bloom and vignette postprocessing
+- **Three.js** via **React Three Fiber** for the world, flat-lit and instanced for speed
 - **Zod-validated content model**: one set of typed files feeds the 3D world, the classic HTML pages, and the resume
 - Deploys to **both Vercel and Cloudflare Workers** from the same codebase
 
@@ -45,9 +45,10 @@ The world layout maps each entry to an anchor point in its zone, gives it a door
 A portfolio that lags is a portfolio that gets closed. The rules I set:
 
 - Three.js loads **only** after you choose Game mode; the landing page and classic pages ship zero game code
-- Trees, lamps, and skyline towers are **instanced** (a handful of draw calls for hundreds of objects)
+- No shadow maps and no postprocessing passes: it is a bright day scene with two lights and blob shadows, the same trick playful WebGL games use to stay fast
+- Trees, clouds, grass, bridge steel, and skyline towers are **instanced** (a handful of draw calls for hundreds of objects)
 - Per-frame data lives in refs and module state, never in React state
-- A quality ladder watches the frame rate and steps down resolution, then effects, before anything stutters
+- A quality ladder watches the frame rate and steps down resolution before anything stutters
 - Software renderers (no GPU) are detected up front and get a floor-quality scene instead of a slideshow
 
 ## What's next
