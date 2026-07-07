@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useRef } from "react";
 import { gameBus } from "@/game/bus";
 import { INTERACTABLES, type WorldInteractable } from "./layout";
-import { playerPos, runtime } from "./state";
+import { activeTarget, playerPos, runtime } from "./state";
 import type { ControlName } from "./player";
 
 /**
@@ -51,10 +51,14 @@ export function Interactions() {
     if (nearest !== current.current) {
       current.current = nearest;
       if (nearest) {
+        activeTarget.x = nearest.x;
+        activeTarget.z = nearest.z;
+        activeTarget.active = nearest.payload !== null;
         gameBus.emit("hint:show", {
           label: nearest.payload ? `[E] ${nearest.hint}` : nearest.hint,
         });
       } else {
+        activeTarget.active = false;
         gameBus.emit("hint:hide");
       }
     }

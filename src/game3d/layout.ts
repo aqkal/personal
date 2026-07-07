@@ -59,15 +59,22 @@ export function isInsideWorld(x: number, z: number): boolean {
 
 /* ---------------------------------- structures ---------------------------------- */
 
-/** UQ Great Court: three sandstone wings + clock tower, opening south. */
+/**
+ * UQ Great Court: an enclosed ring of sandstone wings with cloisters, a
+ * clock tower on the north wing, and an arched south gate (like the real
+ * Forgan Smith entrance axis).
+ */
 export const GREAT_COURT = {
   center: { x: -27, z: -24 },
   northWing: { x: -27, z: -31, hw: 13, hd: 3, h: 7.5 },
   westWing: { x: -38, z: -22, hw: 3, hd: 9, h: 6.5 },
   eastWing: { x: -16, z: -22, hw: 3, hd: 9, h: 6.5 },
+  southWest: { x: -34.5, z: -13.5, hw: 3.5, hd: 2, h: 5.5 },
+  southEast: { x: -19.5, z: -13.5, hw: 3.5, hd: 2, h: 5.5 },
+  gate: { x: -27, z: -13.5, halfOpening: 3.2, pillarR: 0.45, h: 6.5 },
   tower: { x: -27, z: -30.4, w: 4.4, h: 15 },
-  /** interaction spot at the court entry */
-  door: { x: -27, z: -17.5 },
+  /** interaction spot at the south gate */
+  door: { x: -27, z: -11 },
   plaque: { x: -22.5, z: -18 },
 };
 
@@ -235,10 +242,14 @@ export const LAMPS: LampSpec[] = (() => {
 /* ---------------------------------- colliders ---------------------------------- */
 
 export const COLLIDERS: Collider[] = [
-  // Great Court wings + tower
+  // Great Court wings + gate pillars + tower
   { x: GREAT_COURT.northWing.x, z: GREAT_COURT.northWing.z, hw: GREAT_COURT.northWing.hw, hd: GREAT_COURT.northWing.hd },
   { x: GREAT_COURT.westWing.x, z: GREAT_COURT.westWing.z, hw: GREAT_COURT.westWing.hw, hd: GREAT_COURT.westWing.hd },
   { x: GREAT_COURT.eastWing.x, z: GREAT_COURT.eastWing.z, hw: GREAT_COURT.eastWing.hw, hd: GREAT_COURT.eastWing.hd },
+  { x: GREAT_COURT.southWest.x, z: GREAT_COURT.southWest.z, hw: GREAT_COURT.southWest.hw, hd: GREAT_COURT.southWest.hd },
+  { x: GREAT_COURT.southEast.x, z: GREAT_COURT.southEast.z, hw: GREAT_COURT.southEast.hw, hd: GREAT_COURT.southEast.hd },
+  { x: GREAT_COURT.gate.x - GREAT_COURT.gate.halfOpening, z: GREAT_COURT.gate.z, r: GREAT_COURT.gate.pillarR },
+  { x: GREAT_COURT.gate.x + GREAT_COURT.gate.halfOpening, z: GREAT_COURT.gate.z, r: GREAT_COURT.gate.pillarR },
   // offices
   ...OFFICES.map((o) => ({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 })),
   // arcade cabinets row (block behind the pavilion too)
@@ -277,11 +288,11 @@ export function isBlocked(x: number, z: number): boolean {
 /* ---------------------------------- interactables ---------------------------------- */
 
 export const INTERACTABLES: WorldInteractable[] = [
-  // education: the Great Court itself
+  // education: the Great Court gate
   ...education.map((edu) => ({
     x: GREAT_COURT.door.x,
     z: GREAT_COURT.door.z,
-    radius: 5,
+    radius: 4.5,
     hint: edu.institution,
     payload: {
       kind: "education" as const,

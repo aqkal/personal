@@ -5,6 +5,8 @@ import { Canvas } from "@react-three/fiber";
 import {
   Bloom,
   EffectComposer,
+  N8AO,
+  SMAA,
   Vignette,
 } from "@react-three/postprocessing";
 import { useEffect, useMemo, useState } from "react";
@@ -20,10 +22,12 @@ import {
   StreetLamps,
   ZoneLabels,
 } from "./buildings";
+import { CameraControls } from "./camera-controls";
 import { Interactions } from "./interactions";
 import {
   Bridge,
   Fireflies,
+  GrassTufts,
   Ground,
   NightSky,
   Paths,
@@ -32,7 +36,8 @@ import {
   TreeField,
 } from "./nature";
 import { Player, type ControlName } from "./player";
-import { runtime } from "./state";
+import { cameraOrbit, runtime } from "./state";
+import { TargetRing } from "./target-ring";
 
 const CONTROL_MAP: Array<{ name: ControlName; keys: string[] }> = [
   { name: "forward", keys: ["ArrowUp", "KeyW"] },
@@ -91,6 +96,14 @@ export default function World3D({
       runtime.paused = false;
     };
   }, []);
+
+  // fresh entry replays the cinematic fly-in (reduced motion skips it)
+  useEffect(() => {
+    cameraOrbit.yaw = 0;
+    cameraOrbit.pitch = 0.62;
+    cameraOrbit.dist = 13;
+    cameraOrbit.intro = reducedMotion ? 1 : 0;
+  }, [reducedMotion]);
 
   const glProps = useMemo(
     () => ({
@@ -156,6 +169,7 @@ export default function World3D({
         <Skyline />
         <Bridge />
         <TreeField />
+        {!softGL && <GrassTufts />}
         <StreetLamps />
 
         <GreatCourt />
@@ -170,10 +184,18 @@ export default function World3D({
         {!reducedMotion && <Fireflies />}
 
         <Player />
+        <CameraControls />
         <Interactions />
+        <TargetRing />
 
         {effectsOn && (
           <EffectComposer multisampling={0}>
+            <N8AO
+              aoRadius={1.8}
+              intensity={3.2}
+              distanceFalloff={1}
+              quality="performance"
+            />
             <Bloom
               mipmapBlur
               intensity={0.75}
@@ -181,6 +203,7 @@ export default function World3D({
               luminanceSmoothing={0.15}
             />
             <Vignette eskil={false} offset={0.22} darkness={0.62} />
+            <SMAA />
           </EffectComposer>
         )}
       </Canvas>

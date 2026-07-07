@@ -5,10 +5,21 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
 import { isBlocked, PLAYER_START } from "./layout";
-import { joystick, playerPos, runtime } from "./state";
+import {
+  cameraOrbit,
+  joystick,
+  playerHeading,
+  playerPos,
+  runtime,
+} from "./state";
 
 const WALK_SPEED = 6.2;
 const SPRINT_SPEED = 9.6;
+const INTRO_SECONDS = 4.2;
+
+/** Cinematic fly-in: high over the river/city, sweeping down to the plaza. */
+const INTRO_FROM = new THREE.Vector3(26, 46, 66);
+const INTRO_LOOK_FROM = new THREE.Vector3(0, 6, 76);
 
 export type ControlName =
   | "forward"
@@ -20,11 +31,14 @@ export type ControlName =
 
 const tmpTarget = new THREE.Vector3();
 const tmpCam = new THREE.Vector3();
+const tmpLook = new THREE.Vector3();
+
+const easeInOut = (t: number) => t * t * (3 - 2 * t);
 
 /**
- * Stylized student character: procedural walk cycle, collision-aware
- * movement on the XZ plane, damped third-person camera. All per-frame math
- * stays in refs and module state (no React re-renders while moving).
+ * Stylized student character (UQ purple hoodie): procedural walk cycle,
+ * collision-aware camera-relative movement, orbitable third-person camera.
+ * All per-frame math stays in refs and module state.
  */
 export function Player() {
   const group = useRef<THREE.Group>(null);
@@ -33,7 +47,6 @@ export function Player() {
   const armL = useRef<THREE.Group>(null);
   const armR = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
-  const heading = useRef(Math.PI);
   const walkPhase = useRef(0);
   const [, getKeys] = useKeyboardControls<ControlName>();
 
@@ -42,27 +55,39 @@ export function Player() {
     const g = group.current;
     if (!g) return;
 
-    let vx = 0;
-    let vz = 0;
-    if (!runtime.paused) {
+    // input -> camera-relative movement
+    let fwd = 0;
+    let right = 0;
+    if (!runtime.paused && cameraOrbit.intro >= 1) {
       const k = getKeys();
-      if (k.forward) vz -= 1;
-      if (k.backward) vz += 1;
-      if (k.left) vx -= 1;
-      if (k.right) vx += 1;
+      if (k.forward) fwd += 1;
+      if (k.backward) fwd -= 1;
+      if (k.left) right -= 1;
+      if (k.right) right += 1;
       if (joystick.active) {
-        vx = joystick.x;
-        vz = joystick.y;
+        fwd = -joystick.y;
+        right = joystick.x;
       }
-      const len = Math.hypot(vx, vz);
-      if (len > 1e-3) {
-        const speed = (k.sprint ? SPRINT_SPEED : WALK_SPEED) / Math.max(len, 1);
-        vx *= speed;
-        vz *= speed;
-      } else {
-        vx = 0;
-        vz = 0;
-      }
+    }
+
+    const yaw = cameraOrbit.yaw;
+    // camera sits at +offsetDir; forward on screen is the opposite
+    const fx = -Math.sin(yaw);
+    const fz = -Math.cos(yaw);
+    const rx = Math.cos(yaw);
+    const rz = -Math.sin(yaw);
+
+    let vx = fx * fwd + rx * right;
+    let vz = fz * fwd + rz * right;
+    const len = Math.hypot(vx, vz);
+    if (len > 1e-3) {
+      const k = getKeys();
+      const speed = (k.sprint ? SPRINT_SPEED : WALK_SPEED) / Math.max(len, 1);
+      vx *= speed;
+      vz *= speed;
+    } else {
+      vx = 0;
+      vz = 0;
     }
 
     // axis-separated movement so we slide along walls
@@ -73,20 +98,24 @@ export function Player() {
 
     g.position.set(playerPos.x, 0, playerPos.z);
 
+    // heading + walk cycle
     const moving = vx !== 0 || vz !== 0;
     if (moving) {
       const target = Math.atan2(vx, vz);
-      let diff = target - heading.current;
+      let diff = target - playerHeading.value;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      heading.current += diff * Math.min(1, dt * 12);
-      g.rotation.y = heading.current;
+      playerHeading.value += diff * Math.min(1, dt * 12);
+      g.rotation.y = playerHeading.value;
       walkPhase.current += dt * (Math.hypot(vx, vz) > WALK_SPEED + 1 ? 13 : 10);
     } else {
-      walkPhase.current = THREE.MathUtils.lerp(walkPhase.current, Math.round(walkPhase.current / Math.PI) * Math.PI, dt * 10);
+      walkPhase.current = THREE.MathUtils.lerp(
+        walkPhase.current,
+        Math.round(walkPhase.current / Math.PI) * Math.PI,
+        dt * 10,
+      );
     }
 
-    // limb swing + idle breathing
     const swing = Math.sin(walkPhase.current) * (moving ? 0.75 : 0.05);
     if (legL.current) legL.current.rotation.x = swing;
     if (legR.current) legR.current.rotation.x = -swing;
@@ -98,27 +127,48 @@ export function Player() {
         : Math.sin(performance.now() / 900) * 0.02;
     }
 
-    // damped third-person camera; pulls in closer while a panel is open
-    const dist = runtime.paused ? 7.2 : 10.6;
-    const height = runtime.paused ? 5.4 : 8.2;
-    tmpCam.set(playerPos.x, height, playerPos.z + dist);
-    const t = 1 - Math.exp(-dt * 4.2);
-    camera.position.lerp(tmpCam, t);
-    tmpTarget.set(playerPos.x, 1.5, playerPos.z);
-    camera.lookAt(tmpTarget);
+    // orbit camera target position
+    const zoomK = runtime.paused ? 0.62 : 1;
+    const dist = cameraOrbit.dist * zoomK;
+    const cosP = Math.cos(cameraOrbit.pitch);
+    const sinP = Math.sin(cameraOrbit.pitch);
+    tmpCam.set(
+      playerPos.x + Math.sin(yaw) * dist * cosP,
+      dist * sinP + 1.2,
+      playerPos.z + Math.cos(yaw) * dist * cosP,
+    );
+    tmpLook.set(playerPos.x, 1.5, playerPos.z);
+
+    if (cameraOrbit.intro < 1) {
+      // cinematic fly-in from above the river; any input skips it
+      cameraOrbit.intro = Math.min(1, cameraOrbit.intro + dt / INTRO_SECONDS);
+      const t = easeInOut(cameraOrbit.intro);
+      camera.position.lerpVectors(INTRO_FROM, tmpCam, t);
+      tmpTarget.lerpVectors(INTRO_LOOK_FROM, tmpLook, t);
+      camera.lookAt(tmpTarget);
+    } else {
+      const t = 1 - Math.exp(-dt * 5.5);
+      camera.position.lerp(tmpCam, t);
+      camera.lookAt(tmpLook);
+    }
   });
 
   return (
     <group ref={group} position={[PLAYER_START.x, 0, PLAYER_START.z]}>
       <group ref={body} name="body">
-        {/* torso: teal hoodie */}
+        {/* torso: UQ purple hoodie */}
         <mesh position={[0, 1.02, 0]} castShadow>
           <capsuleGeometry args={[0.26, 0.42, 6, 12]} />
-          <meshStandardMaterial color="#2fbfa3" roughness={0.8} />
+          <meshStandardMaterial color="#6a3ba3" roughness={0.8} />
+        </mesh>
+        {/* hood bump */}
+        <mesh position={[0, 1.32, -0.14]} castShadow>
+          <sphereGeometry args={[0.16, 10, 10]} />
+          <meshStandardMaterial color="#5b3190" roughness={0.85} />
         </mesh>
         {/* backpack: every student has one */}
-        <mesh position={[0, 1.1, -0.26]} castShadow>
-          <boxGeometry args={[0.34, 0.42, 0.18]} />
+        <mesh position={[0, 1.08, -0.3]} castShadow>
+          <boxGeometry args={[0.34, 0.44, 0.18]} />
           <meshStandardMaterial color="#e0a33c" roughness={0.85} />
         </mesh>
         {/* head */}
@@ -135,13 +185,13 @@ export function Player() {
         <group ref={armL} position={[-0.34, 1.28, 0]}>
           <mesh position={[0, -0.26, 0]} castShadow>
             <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshStandardMaterial color="#28a68d" roughness={0.8} />
+            <meshStandardMaterial color="#5b3190" roughness={0.8} />
           </mesh>
         </group>
         <group ref={armR} position={[0.34, 1.28, 0]}>
           <mesh position={[0, -0.26, 0]} castShadow>
             <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshStandardMaterial color="#28a68d" roughness={0.8} />
+            <meshStandardMaterial color="#5b3190" roughness={0.8} />
           </mesh>
         </group>
       </group>

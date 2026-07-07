@@ -2,8 +2,9 @@
 
 import { Html, Instance, Instances, Sparkles } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { playerPos } from "./state";
 import {
   ARCADE,
   CABINETS,
@@ -26,11 +27,31 @@ function Label({
   position,
   children,
   accent = "#4ef08a",
+  /** only render within this distance of the player (declutters far views) */
+  showWithin,
+  /** world-space anchor for the proximity check (position may be local) */
+  worldXZ,
 }: {
   position: [number, number, number];
   children: string;
   accent?: string;
+  showWithin?: number;
+  worldXZ?: [number, number];
 }) {
+  const [visible, setVisible] = useState(showWithin === undefined);
+  const tick = useRef(0);
+
+  useFrame(() => {
+    if (showWithin === undefined || !worldXZ) return;
+    // cheap proximity check, every ~12 frames
+    tick.current = (tick.current + 1) % 12;
+    if (tick.current !== 0) return;
+    const d = Math.hypot(worldXZ[0] - playerPos.x, worldXZ[1] - playerPos.z);
+    const next = d < showWithin;
+    setVisible((prev) => (prev === next ? prev : next));
+  });
+
+  if (!visible) return null;
   return (
     <Html position={position} center distanceFactor={38} zIndexRange={[10, 0]}>
       <div
@@ -69,13 +90,81 @@ function useLitWindows(cols: number, rows: number, litColor: string, density = 0
 
 /* ---------------------------------- UQ Great Court ---------------------------------- */
 
+/** Sandstone brickwork: coursed blocks with tint variation, like the real thing. */
+function useSandstoneTexture() {
+  return useMemo(() => {
+    const rng = lcg(1911);
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const ctx = c.getContext("2d")!;
+    const tints = ["#d3bc8d", "#c9b183", "#dcc79b", "#c2a878", "#d8c294"];
+    const courseH = 16;
+    const blockW = 32;
+    for (let row = 0; row < 128 / courseH; row++) {
+      const off = row % 2 === 0 ? 0 : blockW / 2;
+      for (let x = -1; x < 5; x++) {
+        ctx.fillStyle = tints[Math.floor(rng() * tints.length)];
+        ctx.fillRect(x * blockW + off, row * courseH, blockW - 1.5, courseH - 1.5);
+      }
+    }
+    // mortar shows through the gaps
+    ctx.globalCompositeOperation = "destination-over";
+    ctx.fillStyle = "#a8916a";
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.globalCompositeOperation = "source-over";
+    // weathering speckle
+    for (let i = 0; i < 260; i++) {
+      ctx.fillStyle = rng() < 0.5 ? "#b49a6e" : "#e2d0a6";
+      ctx.globalAlpha = 0.18;
+      ctx.fillRect(rng() * 128, rng() * 128, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+}
+
+/** Warm arched cloister windows (arch tops, some dim) for court facades. */
+function useArchedWindows(count: number) {
+  return useMemo(() => {
+    const rng = lcg(count * 7 + 13);
+    const c = document.createElement("canvas");
+    c.width = count * 24;
+    c.height = 48;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#171310";
+    ctx.fillRect(0, 0, c.width, 48);
+    for (let i = 0; i < count; i++) {
+      const lit = rng() < 0.7;
+      ctx.fillStyle = lit ? "#ffd98a" : "#3a3024";
+      ctx.globalAlpha = lit ? 0.65 + rng() * 0.35 : 0.8;
+      const x = i * 24 + 6;
+      // arch = rect + semicircle top
+      ctx.fillRect(x, 18, 12, 24);
+      ctx.beginPath();
+      ctx.arc(x + 6, 18, 6, Math.PI, 0);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [count]);
+}
+
 /**
- * The UQ signature: sandstone wings around a court, arched cloisters,
- * and the clock tower, warm-lit at night.
+ * The UQ signature: an enclosed sandstone Great Court with cloister
+ * colonnades, arched lit windows, a south entrance gate, and the clock
+ * tower glowing over everything.
  */
 export function GreatCourt() {
-  const { northWing, westWing, eastWing, tower } = GREAT_COURT;
-  const warmWindows = useLitWindows(12, 3, "#ffd98a", 0.65);
+  const { northWing, westWing, eastWing, southWest, southEast, gate, tower } =
+    GREAT_COURT;
+  const sandstone = useSandstoneTexture();
+  const archesWide = useArchedWindows(12);
+  const archesSide = useArchedWindows(8);
 
   const clockFace = useMemo(() => {
     const c = document.createElement("canvas");
@@ -100,14 +189,22 @@ export function GreatCourt() {
     return tex;
   }, []);
 
-  const wings = [northWing, westWing, eastWing];
+  const wingTexture = (hw: number, h: number) => {
+    const t = sandstone.clone();
+    t.needsUpdate = true;
+    t.repeat.set(Math.max(1, hw / 2.2), Math.max(1, h / 3.2));
+    return t;
+  };
+
+  const wings = [northWing, westWing, eastWing, southWest, southEast];
 
   // cloister columns line the inner (court-facing) edges
   const columns = useMemo(() => {
     const out: Array<[number, number, number]> = [];
-    for (let x = -12; x <= -2.5; x += 1.9) out.push([GREAT_COURT.center.x + x + 6.75, 1.5, northWing.z + northWing.hd + 0.7]);
-    for (let x = 2.5; x <= 12; x += 1.9) out.push([GREAT_COURT.center.x + x - 6.75, 1.5, northWing.z + northWing.hd + 0.7]);
-    for (let z = -6; z <= 6; z += 1.9) {
+    for (let x = -11.5; x <= 11.5; x += 1.92) {
+      out.push([GREAT_COURT.center.x + x, 1.5, northWing.z + northWing.hd + 0.7]);
+    }
+    for (let z = -6.5; z <= 6.5; z += 1.86) {
       out.push([westWing.x + westWing.hw + 0.7, 1.5, westWing.z + z]);
       out.push([eastWing.x - eastWing.hw - 0.7, 1.5, eastWing.z + z]);
     }
@@ -120,54 +217,131 @@ export function GreatCourt() {
         <group key={i}>
           <mesh position={[w.x, w.h / 2, w.z]} castShadow receiveShadow>
             <boxGeometry args={[w.hw * 2, w.h, w.hd * 2]} />
-            <meshStandardMaterial color={SANDSTONE} roughness={0.92} />
+            <meshStandardMaterial map={wingTexture(w.hw, w.h)} roughness={0.92} />
           </mesh>
-          {/* roofline */}
+          {/* roofline parapet */}
           <mesh position={[w.x, w.h + 0.35, w.z]} castShadow>
             <boxGeometry args={[w.hw * 2 + 0.6, 0.7, w.hd * 2 + 0.6]} />
             <meshStandardMaterial color={SANDSTONE_DARK} roughness={0.95} />
           </mesh>
-          {/* warm lit windows facing the court */}
-          <mesh
-            position={
-              i === 0
-                ? [w.x, w.h * 0.62, w.z + w.hd + 0.03]
-                : i === 1
-                  ? [w.x + w.hw + 0.03, w.h * 0.62, w.z]
-                  : [w.x - w.hw - 0.03, w.h * 0.62, w.z]
-            }
-            rotation-y={i === 0 ? 0 : i === 1 ? Math.PI / 2 : -Math.PI / 2}
-          >
-            <planeGeometry args={[w.hw * 2 - 1, w.h * 0.5]} />
-            <meshStandardMaterial
-              color="#141210"
-              emissiveMap={warmWindows}
-              emissive="#ffffff"
-              emissiveIntensity={1.6}
-              roughness={0.9}
-            />
-          </mesh>
         </group>
       ))}
 
-      {/* cloister colonnade */}
+      {/* arched lit windows on the court-facing facades */}
+      <mesh
+        position={[northWing.x, northWing.h * 0.6, northWing.z + northWing.hd + 0.03]}
+      >
+        <planeGeometry args={[northWing.hw * 2 - 1.5, northWing.h * 0.45]} />
+        <meshStandardMaterial
+          color="#171310"
+          emissiveMap={archesWide}
+          emissive="#ffffff"
+          emissiveIntensity={1.7}
+          roughness={0.9}
+        />
+      </mesh>
+      <mesh
+        position={[westWing.x + westWing.hw + 0.03, westWing.h * 0.6, westWing.z]}
+        rotation-y={Math.PI / 2}
+      >
+        <planeGeometry args={[westWing.hd * 2 - 1.5, westWing.h * 0.45]} />
+        <meshStandardMaterial
+          color="#171310"
+          emissiveMap={archesSide}
+          emissive="#ffffff"
+          emissiveIntensity={1.7}
+          roughness={0.9}
+        />
+      </mesh>
+      <mesh
+        position={[eastWing.x - eastWing.hw - 0.03, eastWing.h * 0.6, eastWing.z]}
+        rotation-y={-Math.PI / 2}
+      >
+        <planeGeometry args={[eastWing.hd * 2 - 1.5, eastWing.h * 0.45]} />
+        <meshStandardMaterial
+          color="#171310"
+          emissiveMap={archesSide}
+          emissive="#ffffff"
+          emissiveIntensity={1.7}
+          roughness={0.9}
+        />
+      </mesh>
+
+      {/* cloister colonnade: columns + capitals + lintel + warm glow behind */}
       <Instances limit={columns.length} castShadow>
-        <cylinderGeometry args={[0.22, 0.26, 3, 8]} />
+        <cylinderGeometry args={[0.2, 0.25, 3, 8]} />
         <meshStandardMaterial color={SANDSTONE} roughness={0.9} />
         {columns.map((p, i) => (
           <Instance key={i} position={p} />
         ))}
       </Instances>
+      <Instances limit={columns.length}>
+        <boxGeometry args={[0.55, 0.22, 0.55]} />
+        <meshStandardMaterial color={SANDSTONE_DARK} roughness={0.9} />
+        {columns.map((p, i) => (
+          <Instance key={i} position={[p[0], 3.05, p[2]]} />
+        ))}
+      </Instances>
+      {/* lintel beams over the colonnades */}
+      <mesh position={[GREAT_COURT.center.x, 3.35, northWing.z + northWing.hd + 0.7]} castShadow>
+        <boxGeometry args={[northWing.hw * 2 - 1, 0.4, 0.8]} />
+        <meshStandardMaterial color={SANDSTONE} roughness={0.9} />
+      </mesh>
+      {[westWing.x + westWing.hw + 0.7, eastWing.x - eastWing.hw - 0.7].map((x) => (
+        <mesh key={x} position={[x, 3.35, westWing.z]} castShadow>
+          <boxGeometry args={[0.8, 0.4, westWing.hd * 2 - 1]} />
+          <meshStandardMaterial color={SANDSTONE} roughness={0.9} />
+        </mesh>
+      ))}
+      {/* warm cloister glow strips behind the columns */}
+      <mesh position={[GREAT_COURT.center.x, 1.4, northWing.z + northWing.hd + 0.08]}>
+        <planeGeometry args={[northWing.hw * 2 - 1.5, 2.6]} />
+        <meshStandardMaterial color="#241a10" emissive="#ff9d4a" emissiveIntensity={0.55} />
+      </mesh>
+
+      {/* south entrance gate: pillars + arch lintel */}
+      {[-1, 1].map((side) => (
+        <mesh
+          key={side}
+          position={[gate.x + side * gate.halfOpening, gate.h / 2, gate.z]}
+          castShadow
+        >
+          <boxGeometry args={[1, gate.h, 1.4]} />
+          <meshStandardMaterial map={wingTexture(1, gate.h)} roughness={0.9} />
+        </mesh>
+      ))}
+      <mesh position={[gate.x, gate.h - 0.5, gate.z]} castShadow>
+        <boxGeometry args={[gate.halfOpening * 2 + 1, 1.2, 1.6]} />
+        <meshStandardMaterial color={SANDSTONE_DARK} roughness={0.9} />
+      </mesh>
+      {/* gate lanterns */}
+      {[-1, 1].map((side) => (
+        <mesh key={side} position={[gate.x + side * gate.halfOpening, gate.h + 0.35, gate.z]}>
+          <sphereGeometry args={[0.16, 10, 10]} />
+          <meshBasicMaterial color={[2.4, 1.9, 1.1]} toneMapped={false} />
+        </mesh>
+      ))}
 
       {/* clock tower */}
       <group position={[tower.x, 0, tower.z]}>
         <mesh position={[0, tower.h / 2, 0]} castShadow>
           <boxGeometry args={[tower.w, tower.h, tower.w]} />
-          <meshStandardMaterial color={SANDSTONE} roughness={0.9} />
+          <meshStandardMaterial map={wingTexture(tower.w / 2, tower.h)} roughness={0.9} />
         </mesh>
-        <mesh position={[0, tower.h + 1.1, 0]} castShadow>
-          <coneGeometry args={[tower.w * 0.78, 2.4, 4]} />
+        {/* stepped cap + belfry openings */}
+        <mesh position={[0, tower.h + 0.3, 0]} castShadow>
+          <boxGeometry args={[tower.w + 0.7, 0.6, tower.w + 0.7]} />
           <meshStandardMaterial color={SANDSTONE_DARK} roughness={0.95} />
+        </mesh>
+        {[0, Math.PI / 2].map((ry) => (
+          <mesh key={ry} position={[0, tower.h - 5.2, 0]} rotation-y={ry}>
+            <boxGeometry args={[tower.w + 0.06, 1.6, 1.1]} />
+            <meshStandardMaterial color="#1c1408" emissive="#ffca7a" emissiveIntensity={0.8} />
+          </mesh>
+        ))}
+        <mesh position={[0, tower.h + 1.7, 0]} castShadow>
+          <coneGeometry args={[tower.w * 0.78, 2.6, 4]} />
+          <meshStandardMaterial color="#5d4a7a" roughness={0.95} />
         </mesh>
         {/* clock faces, gently lit */}
         {[0, Math.PI].map((ry) => (
@@ -371,7 +545,12 @@ function ArcadeCabinet({ spec }: { spec: (typeof CABINETS)[number] }) {
         <boxGeometry args={[1.05, 0.1, 0.5]} />
         <meshStandardMaterial color="#262c48" roughness={0.7} />
       </mesh>
-      <Label position={[0, 2.6, 0]} accent={spec.accent}>
+      <Label
+        position={[0, 2.6, 0]}
+        accent={spec.accent}
+        showWithin={16}
+        worldXZ={[spec.x, spec.z]}
+      >
         {spec.label.toUpperCase()}
       </Label>
     </group>
@@ -416,7 +595,12 @@ function Crystal({ spec }: { spec: (typeof CRYSTALS)[number] }) {
           metalness={0.1}
         />
       </mesh>
-      <Label position={[0, 2.7, 0]} accent={spec.accent}>
+      <Label
+        position={[0, 2.7, 0]}
+        accent={spec.accent}
+        showWithin={20}
+        worldXZ={[spec.x, spec.z]}
+      >
         {spec.label.toUpperCase()}
       </Label>
     </group>

@@ -34,12 +34,14 @@ src/app/page.tsx -> HomeShell (client)
 ### 3. 3D world (`src/game3d/`)
 
 - `layout.ts`: pure data. Zone rectangles, anchor slots, the content -> structure mapping (`OFFICES`, `CABINETS`, `CRYSTALS`, `INTERACTABLES`), colliders, and the walkable-area function. No three.js imports, unit-testable.
-- `world.tsx`: the R3F `<Canvas>`: lighting rig (ambient + hemisphere + shadow-casting moon directional + 7 accent point lights), fog, postprocessing (Bloom + Vignette), quality ladder.
-- `nature.tsx`: ground, paths, river (custom shader), night sky, Brisbane skyline, bridge, instanced trees, fireflies.
-- `buildings.tsx`: Great Court, office towers, café, post office, arcade, crystals, fountain, street lamps, floating HTML labels.
-- `player.tsx`: character meshes, procedural walk cycle, collision-aware movement, damped third-person camera.
-- `interactions.tsx`: proximity detection -> hint chips -> panel open.
-- `state.ts`: mutable frame state (`playerPos`, `runtime.paused`, `joystick`). Dependency-free so HUD components can import it without pulling three.js.
+- `world.tsx`: the R3F `<Canvas>`: lighting rig (ambient + hemisphere + shadow-casting moon directional + 7 accent point lights), fog, postprocessing (N8AO ambient occlusion + Bloom + Vignette + SMAA), quality ladder.
+- `nature.tsx`: gradient sky dome, ground, paved paths, river (custom shader with fresnel, moon glint, edge foam), Brisbane skyline, bridge, instanced multi-puff trees with blossom carpets, instanced grass tufts, fireflies.
+- `buildings.tsx`: the enclosed Great Court (sandstone brick textures, cloister colonnades, arched lit windows, south gate, clock tower), office towers, café, post office, arcade, crystals, fountain, street lamps, proximity-aware HTML labels.
+- `player.tsx`: character meshes, procedural walk cycle, collision-aware camera-relative movement, orbitable third-person camera with a cinematic fly-in.
+- `camera-controls.tsx`: drag to orbit, wheel/pinch to zoom, any input skips the intro.
+- `interactions.tsx` + `target-ring.tsx`: proximity detection -> hint chips + pulsing ground ring -> panel open.
+- `state.ts`: mutable frame state (`playerPos`, `playerHeading`, `cameraOrbit`, `runtime.paused`, `joystick`, `activeTarget`). Dependency-free so HUD components can import it without pulling three.js.
+- Map UI (`src/components/game/world-map.tsx`): a live corner minimap and an M-key full map overlay with legend, both drawn on 2D canvas straight from `layout.ts` data.
 
 ### 4. Game <-> React bridge (`src/game/bus.ts`)
 

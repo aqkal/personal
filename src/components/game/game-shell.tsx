@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { profile } from "@content";
 import { gameBus } from "@/game/bus";
+import { runtime } from "@/game3d/state";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { DialogPanel } from "./dialog-panel";
 import { TouchControls } from "./touch-controls";
+import { MapOverlay, Minimap } from "./world-map";
 
 /**
  * Three.js and the whole 3D world stay behind this dynamic import; no other
@@ -22,6 +24,8 @@ export function GameShell({ onExit }: { onExit: () => void }) {
   const [ready, setReady] = useState(false);
   const [showHint, setShowHint] = useState(true);
   const [interactHint, setInteractHint] = useState<string | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [fps, setFps] = useState<number | null>(null);
 
@@ -29,15 +33,42 @@ export function GameShell({ onExit }: { onExit: () => void }) {
     const onReady = () => setReady(true);
     const onHintShow = ({ label }: { label: string }) => setInteractHint(label);
     const onHintHide = () => setInteractHint(null);
+    const onPanelOpen = () => setDialogOpen(true);
+    const onPanelClose = () => setDialogOpen(false);
     gameBus.on("world:ready", onReady);
     gameBus.on("hint:show", onHintShow);
     gameBus.on("hint:hide", onHintHide);
+    gameBus.on("panel:open", onPanelOpen);
+    gameBus.on("panel:close", onPanelClose);
     return () => {
       gameBus.off("world:ready", onReady);
       gameBus.off("hint:show", onHintShow);
       gameBus.off("hint:hide", onHintHide);
+      gameBus.off("panel:open", onPanelOpen);
+      gameBus.off("panel:close", onPanelClose);
     };
   }, []);
+
+  // M toggles the map (never over a dialog); the map pauses the world
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.key === "m" || e.key === "M") && !dialogOpen) {
+        e.preventDefault();
+        setMapOpen((open) => !open);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dialogOpen]);
+
+  useEffect(() => {
+    if (mapOpen) {
+      runtime.paused = true;
+      return () => {
+        runtime.paused = false;
+      };
+    }
+  }, [mapOpen]);
 
   // dev-only fps meter
   useEffect(() => {
@@ -131,9 +162,12 @@ export function GameShell({ onExit }: { onExit: () => void }) {
           }`}
         >
           {interactHint ??
-            "WASD / ARROWS · MOVE  ·  SHIFT · RUN  ·  E · INTERACT"}
+            "WASD · MOVE  ·  DRAG · LOOK  ·  SHIFT · RUN  ·  E · INTERACT  ·  M · MAP"}
         </p>
       </div>
+
+      {ready && <Minimap onExpand={() => setMapOpen(true)} />}
+      {mapOpen && <MapOverlay onClose={() => setMapOpen(false)} />}
 
       <TouchControls />
 

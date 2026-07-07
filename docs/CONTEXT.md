@@ -11,7 +11,7 @@ There is always a third path: the **classic site** (`/about`, `/experience`, `/p
 
 ## The world, briefly
 
-- **UQ Campus** (north-west): sandstone Great Court with cloister columns, a clock tower, warm lit windows, jacaranda trees, and a scholarship plaque. Interacting opens the education panel.
+- **UQ Campus** (north-west): an enclosed sandstone Great Court (brick coursing, cloister colonnades, arched lit windows, a south entrance gate) with a clock tower, jacaranda trees dropping blossom carpets, and a scholarship plaque. Interacting at the gate opens the education panel.
 - **Career District** (north-east): one lit office tower per work experience entry.
 - **Project Arcade** (south-east): one neon arcade cabinet per project. One extra cabinet has no label; it plays Snake, with a persistent high score.
 - **Skills Garden** (south-west): one floating crystal per skill category.

@@ -32,7 +32,7 @@ Run lint + typecheck + build before declaring work done.
 - `content/` - single source of truth (Zod schemas in `schemas.ts`, barrel in `index.ts`)
 - `src/app/(classic)/` - server-rendered HTML pages
 - `src/app/api/contact/` - the only server endpoint (see docs/SECURITY.md before touching)
-- `src/game3d/` - the 3D world; `layout.ts` is pure data (positions, colliders, content mapping)
+- `src/game3d/` - the 3D world; `layout.ts` is pure data (positions, colliders, content mapping); `state.ts` is the dependency-free frame state (player, camera orbit, pause)
 - `src/game/bus.ts` - typed mitt bridge between world and React overlays
 - `src/components/game/` - HUD, dialogs, Snake, touch controls
 - `src/terminal/` - reserved for the v2 terminal interface
