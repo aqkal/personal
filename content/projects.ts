@@ -1,7 +1,7 @@
 import type { Project } from "./schemas";
 
 /**
- * Projects — one entry = one glowing arcade cabinet in the Project Arcade
+ * Projects - one entry = one glowing arcade cabinet in the Project Arcade
  * + one card on /projects + one section on /resume.
  * Order controls cabinet placement (first = closest to the arcade entrance).
  * See docs/ADDING_CONTENT.md to add an entry.
@@ -11,7 +11,7 @@ export const projects: Project[] = [
     id: "hull-ship-inspector",
     name: "Hull Ship Inspector",
     tagline: "Computer vision that inspects ship hulls from ROV footage",
-    context: "University of Queensland — DECO3801",
+    context: "University of Queensland - DECO3801",
     year: 2026,
     description:
       "A web-based vessel hull inspection platform where users upload Remotely Operated Vehicle (ROV) footage for automated marine fouling assessment, powered by computer vision and machine learning.",
@@ -27,7 +27,7 @@ export const projects: Project[] = [
       zone: "arcade",
       sprite: "cabinet",
       dialog: [
-        "HULL INSPECTOR — insert coin to dive.",
+        "HULL INSPECTOR - insert coin to dive.",
         "An ROV plunges below the waterline and AI spots the fouling on ship hulls.",
       ],
     },
@@ -36,7 +36,7 @@ export const projects: Project[] = [
     id: "microservices-architecture",
     name: "Microservices Platform",
     tagline: "Cloud-deployed microservices built by a 7-developer team",
-    context: "University of Queensland — CSSE6400 Software Architecture",
+    context: "University of Queensland - CSSE6400 Software Architecture",
     year: 2026,
     description:
       "A microservices-based application designed and built as part of a 7-developer team, applying modern software architecture principles with infrastructure as code.",
@@ -52,7 +52,7 @@ export const projects: Project[] = [
       zone: "arcade",
       sprite: "cabinet",
       dialog: [
-        "MICROSERVICE TYCOON — scale to level 7!",
+        "MICROSERVICE TYCOON - scale to level 7!",
         "Java services, Docker containers, and Terraform-provisioned cloud infra.",
       ],
     },
@@ -77,7 +77,7 @@ export const projects: Project[] = [
       zone: "arcade",
       sprite: "cabinet",
       dialog: [
-        "RENTIXE — find your player home base.",
+        "RENTIXE - find your player home base.",
         "Next.js + Supabase, the same stack powering the site you're standing in.",
       ],
     },
@@ -86,7 +86,7 @@ export const projects: Project[] = [
     id: "team-game-project",
     name: "Team Game Project",
     tagline: "Extending a shared Java game engine with 20+ developers",
-    context: "University of Queensland — CSSE3200 Software Engineering Studio",
+    context: "University of Queensland - CSSE3200 Software Engineering Studio",
     year: 2025,
     description:
       "Collaborated in a large team of 20+ developers to extend a shared Java game-engine codebase, applying real-world software engineering practices for managing complex, evolving systems.",
@@ -102,7 +102,7 @@ export const projects: Project[] = [
       zone: "arcade",
       sprite: "cabinet",
       dialog: [
-        "STUDIO WARS — 20 devs, one codebase.",
+        "STUDIO WARS - 20 devs, one codebase.",
         "A crash course in merge conflicts, code review, and shipping together.",
       ],
     },
@@ -111,7 +111,7 @@ export const projects: Project[] = [
     id: "digital-health-fhir",
     name: "Digital Health Platform",
     tagline: "Interoperable healthcare data with the FHIR standard",
-    context: "University of Queensland — COMP3820",
+    context: "University of Queensland - COMP3820",
     year: 2025,
     description:
       "A digital health web platform using the FHIR (Fast Healthcare Interoperability Resources) standard for interoperable healthcare data exchange, modelled on modern clinical systems.",
@@ -125,7 +125,7 @@ export const projects: Project[] = [
       zone: "arcade",
       sprite: "cabinet",
       dialog: [
-        "HEALTH HERO — interoperability is the final boss.",
+        "HEALTH HERO - interoperability is the final boss.",
         "Electronic health records flowing through FHIR-standard APIs.",
       ],
     },

@@ -2,7 +2,7 @@ import mitt from "mitt";
 
 /**
  * Typed event bus between the Phaser world and the React overlay UI.
- * Frame-level data NEVER crosses this bus — only discrete UI events, so the
+ * Frame-level data NEVER crosses this bus - only discrete UI events, so the
  * React tree re-renders only when a panel actually opens/closes.
  */
 export type PanelKind =
@@ -11,11 +11,12 @@ export type PanelKind =
   | "education"
   | "skills"
   | "blog"
-  | "contact";
+  | "contact"
+  | "snake";
 
 export type PanelPayload = {
   kind: PanelKind;
-  /** Content id (e.g. "dsr-branding") — resolved against @content by React. */
+  /** Content id (e.g. "dsr-branding") - resolved against @content by React. */
   id: string;
   /** RPG dialog lines to type out before showing details. */
   dialog: string[];
@@ -33,6 +34,8 @@ type Events = {
   "hint:hide": undefined;
   /** World scene finished building. */
   "world:ready": undefined;
+  /** Mobile HUD interact button pressed. */
+  "input:interact": undefined;
   /** Snake cabinet: high score changed (for HUD toast). */
   "snake:score": { score: number; best: number };
 };

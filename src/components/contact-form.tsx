@@ -64,7 +64,7 @@ export function ContactForm() {
           name: data.get("name"),
           email: data.get("email"),
           message: data.get("message"),
-          website: data.get("website"), // honeypot — humans never fill this
+          website: data.get("website"), // honeypot - humans never fill this
           turnstileToken: tokenRef.current,
         }),
       });
@@ -94,7 +94,7 @@ export function ContactForm() {
       >
         <p className="font-pixel text-xs text-neon">MESSAGE DELIVERED ✓</p>
         <p className="mt-3 text-sm text-muted">
-          Thanks for reaching out — I&apos;ll get back to you soon.
+          Thanks for reaching out - I&apos;ll get back to you soon.
         </p>
       </div>
     );
@@ -146,7 +146,7 @@ export function ContactForm() {
         />
       </label>
 
-      {/* Honeypot — visually hidden, screen-reader hidden, tab-skipped. Bots fill it, humans can't. */}
+      {/* Honeypot - visually hidden, screen-reader hidden, tab-skipped. Bots fill it, humans can't. */}
       <div
         aria-hidden="true"
         className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden"
@@ -161,7 +161,7 @@ export function ContactForm() {
         <div ref={widgetRef} className="min-h-[65px]" />
       ) : (
         <p className="text-xs text-muted">
-          (Captcha disabled — no NEXT_PUBLIC_TURNSTILE_SITE_KEY configured.)
+          (Captcha disabled - no NEXT_PUBLIC_TURNSTILE_SITE_KEY configured.)
         </p>
       )}
 

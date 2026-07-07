@@ -4,7 +4,7 @@ import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Get in touch with ${profile.name} — open to internships and graduate software engineering roles.`,
+  description: `Get in touch with ${profile.name} - open to internships and graduate software engineering roles.`,
 };
 
 export default function ContactPage() {

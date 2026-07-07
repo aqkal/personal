@@ -1,88 +1,94 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import type Phaser from "phaser";
+import { useEffect, useState } from "react";
 import { profile } from "@content";
+import { gameBus } from "@/game/bus";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { DialogPanel } from "./dialog-panel";
+import { TouchControls } from "./touch-controls";
 
 /**
- * Mounts the Phaser world and layers the React HUD on top.
- * This component is itself dynamically imported (ssr: false), so Phaser and
- * all game systems stay out of every other page's bundle.
+ * Three.js and the whole 3D world stay behind this dynamic import; no other
+ * page pays for them.
  */
+const World3D = dynamic(() => import("@/game3d/world"), {
+  ssr: false,
+  loading: () => null,
+});
+
 export function GameShell({ onExit }: { onExit: () => void }) {
-  const hostRef = useRef<HTMLDivElement>(null);
-  const gameRef = useRef<Phaser.Game | null>(null);
   const [ready, setReady] = useState(false);
   const [showHint, setShowHint] = useState(true);
+  const [interactHint, setInteractHint] = useState<string | null>(null);
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [fps, setFps] = useState<number | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const [{ createGame }, { gameBus }] = await Promise.all([
-        import("@/game"),
-        import("@/game/bus"),
-      ]);
-      if (cancelled || !hostRef.current || gameRef.current) return;
-
-      const onReady = () => setReady(true);
-      gameBus.on("world:ready", onReady);
-      gameRef.current = createGame(hostRef.current);
-
-      // dev-only fps meter (never runs in production builds)
-      let fpsTimer: ReturnType<typeof setInterval> | undefined;
-      if (process.env.NODE_ENV === "development") {
-        fpsTimer = setInterval(() => {
-          setFps(Math.round(gameRef.current?.loop.actualFps ?? 0));
-        }, 800);
-      }
-
-      const cleanup = () => {
-        gameBus.off("world:ready", onReady);
-        if (fpsTimer) clearInterval(fpsTimer);
-      };
-      // stash cleanup on the ref holder
-      (gameRef as { cleanup?: () => void }).cleanup = cleanup;
-    })();
-
+    const onReady = () => setReady(true);
+    const onHintShow = ({ label }: { label: string }) => setInteractHint(label);
+    const onHintHide = () => setInteractHint(null);
+    gameBus.on("world:ready", onReady);
+    gameBus.on("hint:show", onHintShow);
+    gameBus.on("hint:hide", onHintHide);
     return () => {
-      cancelled = true;
-      (gameRef as { cleanup?: () => void }).cleanup?.();
-      gameRef.current?.destroy(true);
-      gameRef.current = null;
+      gameBus.off("world:ready", onReady);
+      gameBus.off("hint:show", onHintShow);
+      gameBus.off("hint:hide", onHintHide);
     };
   }, []);
+
+  // dev-only fps meter
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development" || !ready) return;
+    let frames = 0;
+    let last = performance.now();
+    let raf = 0;
+    const loop = () => {
+      frames++;
+      const now = performance.now();
+      if (now - last >= 1000) {
+        setFps(frames);
+        frames = 0;
+        last = now;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [ready]);
 
   // auto-hide the controls hint after a few seconds of play
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => setShowHint(false), 7000);
+    const t = setTimeout(() => setShowHint(false), 8000);
     return () => clearTimeout(t);
   }, [ready]);
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-bg">
-      {/* Phaser canvas host */}
-      <div ref={hostRef} className="absolute inset-0" />
+      <World3D reducedMotion={reducedMotion} />
 
       {/* boot veil until the world reports ready */}
       <div
         aria-hidden={ready}
-        className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-bg transition-opacity duration-700 ${
+        className={`pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg transition-opacity duration-1000 ${
           ready ? "opacity-0" : "opacity-100"
         }`}
       >
         <p className="font-pixel text-xs text-neon">
-          BUILDING WORLD<span className="animate-blink">_</span>
+          FLYING INTO BRISBANE<span className="animate-blink">_</span>
         </p>
+        <div className="h-1 w-44 overflow-hidden rounded bg-line">
+          <div className="h-full w-1/2 animate-[drift_1.6s_linear_infinite] rounded bg-neon" />
+        </div>
       </div>
 
       {/* top HUD bar */}
       <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-3">
         <p className="rounded bg-black/50 px-3 py-1.5 font-pixel text-[9px] text-neon backdrop-blur-sm">
-          ★ {profile.name.toUpperCase()}&apos;S WORLD
+          ★ {profile.name.toUpperCase()}&apos;S CAMPUS
         </p>
         <div className="flex items-center gap-2">
           {fps !== null && (
@@ -111,16 +117,28 @@ export function GameShell({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      {/* controls hint */}
+      {/* interaction hint (proximity) or controls hint */}
       <div
-        className={`pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center transition-opacity duration-1000 ${
-          showHint && ready ? "opacity-100" : "opacity-0"
+        className={`pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center transition-opacity duration-300 ${
+          ready && (interactHint || showHint) ? "opacity-100" : "opacity-0"
         }`}
       >
-        <p className="rounded-lg bg-black/60 px-4 py-2 font-pixel text-[9px] leading-relaxed text-ink/90 backdrop-blur-sm">
-          WASD / ARROWS · MOVE&nbsp;&nbsp;·&nbsp;&nbsp;E / SPACE · INTERACT
+        <p
+          className={`rounded-lg px-4 py-2 text-center font-pixel text-[9px] leading-relaxed backdrop-blur-sm ${
+            interactHint
+              ? "border border-neon/40 bg-black/70 text-neon"
+              : "bg-black/60 text-ink/90"
+          }`}
+        >
+          {interactHint ??
+            "WASD / ARROWS · MOVE  ·  SHIFT · RUN  ·  E · INTERACT"}
         </p>
       </div>
+
+      <TouchControls />
+
+      {/* RPG dialog overlay */}
+      <DialogPanel />
     </div>
   );
 }

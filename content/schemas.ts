@@ -39,7 +39,7 @@ const slug = z
   .string()
   .regex(/^[a-z0-9-]+$/, "id must be a kebab-case slug (a-z, 0-9, -)");
 
-/** "YYYY-MM" — formatted for display by src/lib/dates.ts */
+/** "YYYY-MM" - formatted for display by src/lib/dates.ts */
 const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "use YYYY-MM");
 
 export const experienceSchema = z.object({
@@ -63,7 +63,7 @@ export const projectSchema = z.object({
   name: z.string().min(1).max(80),
   /** Short punchy line shown on cards and the arcade cabinet marquee. */
   tagline: z.string().min(1).max(120),
-  /** e.g. "University of Queensland — DECO3801" or "Personal project" */
+  /** e.g. "University of Queensland - DECO3801" or "Personal project" */
   context: z.string().min(1).max(120),
   year: z.number().int().min(2000).max(2100),
   description: z.string().min(1).max(600),

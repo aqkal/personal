@@ -14,7 +14,7 @@ import {
 import { skills as rawSkills } from "./skills";
 
 /**
- * Validated content — ALWAYS import from "@content" (this barrel), never from
+ * Validated content - ALWAYS import from "@content" (this barrel), never from
  * the raw files. Zod parses everything at module init, so an invalid entry
  * fails the build/dev render immediately with a precise error instead of
  * silently rendering broken pages or a broken game world.

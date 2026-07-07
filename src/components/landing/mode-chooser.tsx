@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion as m, useReducedMotion } from "motion/react";
 import { profile } from "@content";
 
-/** Deterministic star field — fixed coords so SSR/client markup match. */
+/** Deterministic star field - fixed coords so SSR/client markup match. */
 const STARS = [
   [8, 12], [18, 30], [26, 8], [34, 22], [45, 15], [55, 6], [63, 26],
   [72, 12], [81, 32], [90, 18], [12, 45], [30, 40], [50, 38], [68, 44],
@@ -161,7 +161,7 @@ export function ModeChooser({
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 pt-14">
             <p className="font-pixel text-[10px] text-neon">🎮 GAME WORLD</p>
             <p className="mt-2 text-sm text-ink/85">
-              Walk through my resume — campus, offices, and a playable arcade.
+              Walk through my resume - campus, offices, and a playable arcade.
             </p>
             <p className="mt-3 inline-block rounded border border-neon/60 bg-neon/15 px-3 py-1 font-pixel text-[9px] text-neon opacity-90 transition-all group-hover:bg-neon/25">
               PRESS START ▶

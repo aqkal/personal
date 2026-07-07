@@ -9,7 +9,7 @@ export const profile: Profile = {
   // TODO: your full display name
   name: "Your Name",
   tagline:
-    "Software Engineering student at UQ — I build web experiences that feel alive.",
+    "Software Engineering student at UQ - I build web experiences that feel alive.",
   location: "Brisbane, Australia",
   email: "abdulq0702@gmail.com",
   socials: {

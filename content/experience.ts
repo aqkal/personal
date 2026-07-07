@@ -1,7 +1,7 @@
 import type { Experience } from "./schemas";
 
 /**
- * Work experience — one entry = one office building in the Career District
+ * Work experience - one entry = one office building in the Career District
  * + one card on /experience + one section on /resume.
  * Newest first. See docs/ADDING_CONTENT.md to add an entry.
  */
@@ -27,7 +27,7 @@ export const experience: Experience[] = [
       zone: "career",
       sprite: "office",
       dialog: [
-        "DSR Branding — my current internship!",
+        "DSR Branding - my current internship!",
         "Inside, I craft custom WordPress themes and pixel-perfect client sites.",
       ],
     },
@@ -53,7 +53,7 @@ export const experience: Experience[] = [
       zone: "career",
       sprite: "office",
       dialog: [
-        "BucklerX — where I cut my teeth on real-world software.",
+        "BucklerX - where I cut my teeth on real-world software.",
         "Debugging, testing, and shipping secure community management apps.",
       ],
     },

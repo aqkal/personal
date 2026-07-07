@@ -1,6 +1,6 @@
 import type { Education } from "./schemas";
 
-/** Education — spawns on the UQ Campus zone. */
+/** Education - spawns on the UQ Campus zone. */
 export const education: Education[] = [
   {
     id: "uq-software-engineering",
@@ -18,7 +18,7 @@ export const education: Education[] = [
       zone: "campus",
       sprite: "campus",
       dialog: [
-        "The University of Queensland — my home campus.",
+        "The University of Queensland - my home campus.",
         "Software Engineering, with a 25% scholarship renewed every semester.",
       ],
     },

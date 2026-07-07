@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { education, experience } from "@content";
 import { TechBadges } from "@/components/badges";
 import { formatRange } from "@/lib/dates";
@@ -6,7 +7,7 @@ import { formatRange } from "@/lib/dates";
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Professional experience and education — internships, roles, and the University of Queensland.",
+    "Professional experience and education - internships, roles, and the University of Queensland.",
 };
 
 export default function ExperiencePage() {
@@ -16,9 +17,9 @@ export default function ExperiencePage() {
       <h1 className="mt-3 text-4xl font-bold tracking-tight">Experience</h1>
       <p className="mt-3 text-muted">
         Every entry below is also a building you can walk into in the{" "}
-        <a href="/" className="text-cyan hover:underline">
+        <Link href="/" className="text-cyan hover:underline">
           game world
-        </a>
+        </Link>
         .
       </p>
 

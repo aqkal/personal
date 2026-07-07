@@ -12,7 +12,7 @@ import { formatRange } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "Resume",
-  description: `Resume of ${profile.name} — software engineering student at the University of Queensland.`,
+  description: `Resume of ${profile.name} - software engineering student at the University of Queensland.`,
 };
 
 function Section({
@@ -103,7 +103,7 @@ export default function ResumePage() {
             <div key={job.id} className="break-inside-avoid">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="font-semibold">
-                  {job.company} — {job.role}
+                  {job.company} - {job.role}
                 </h3>
                 <p className="text-sm text-muted print:text-gray-600">
                   {formatRange(job.start, job.end)}
@@ -152,7 +152,7 @@ export default function ResumePage() {
           {certifications.map((c) => (
             <li key={c.id}>
               <span className="font-medium">{c.name}</span>
-              {c.description ? ` — ${c.description}` : null}
+              {c.description ? ` - ${c.description}` : null}
             </li>
           ))}
         </ul>

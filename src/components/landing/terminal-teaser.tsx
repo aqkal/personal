@@ -24,7 +24,7 @@ export function TerminalTeaser({
   const lines = [
     { text: "$ boot terminal_mode", cls: "text-cyan" },
     { text: "ERROR 501: interface not yet implemented", cls: "text-magenta" },
-    { text: "> the terminal ships in v2 — it will read this same world.", cls: "text-ink/80" },
+    { text: "> the terminal ships in v2 - it will read this same world.", cls: "text-ink/80" },
     { text: "> available exits:", cls: "text-ink/80" },
   ];
 

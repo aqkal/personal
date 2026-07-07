@@ -5,7 +5,7 @@ import { formatRange } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `About ${profile.name} — software engineering student, web developer, and builder of interactive things.`,
+  description: `About ${profile.name} - software engineering student, web developer, and builder of interactive things.`,
 };
 
 export default function AboutPage() {
@@ -51,7 +51,7 @@ export default function AboutPage() {
           I&apos;m a {uni.degree} student at the {uni.institution} (
           {formatRange(uni.start, uni.end)}), where I&apos;ve been awarded a
           25% academic scholarship every semester. I care about software that
-          is engineered properly <em>and</em> feels great to use — which is
+          is engineered properly <em>and</em> feels great to use - which is
           why this site is a walkable pixel world instead of another static
           page.
         </p>

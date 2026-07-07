@@ -1,7 +1,7 @@
 import type { SkillCategory } from "./schemas";
 
 /**
- * Skill categories — each spawns a glowing signpost in the Skills Garden.
+ * Skill categories - each spawns a glowing signpost in the Skills Garden.
  */
 export const skills: SkillCategory[] = [
   {
@@ -19,7 +19,7 @@ export const skills: SkillCategory[] = [
     world: {
       zone: "garden",
       sprite: "signpost",
-      dialog: ["Languages I speak fluently — from Python to Haskell."],
+      dialog: ["Languages I speak fluently - from Python to Haskell."],
     },
   },
   {
@@ -38,7 +38,7 @@ export const skills: SkillCategory[] = [
     world: {
       zone: "garden",
       sprite: "signpost",
-      dialog: ["The web garden — where this very site took root."],
+      dialog: ["The web garden - where this very site took root."],
     },
   },
   {
@@ -55,7 +55,7 @@ export const skills: SkillCategory[] = [
     world: {
       zone: "garden",
       sprite: "signpost",
-      dialog: ["Engineering fundamentals — the roots under everything else."],
+      dialog: ["Engineering fundamentals - the roots under everything else."],
     },
   },
   {
@@ -75,7 +75,7 @@ export const skills: SkillCategory[] = [
     world: {
       zone: "garden",
       sprite: "signpost",
-      dialog: ["A well-worn toolbox — Git, Docker, Terraform, and friends."],
+      dialog: ["A well-worn toolbox - Git, Docker, Terraform, and friends."],
     },
   },
 ];

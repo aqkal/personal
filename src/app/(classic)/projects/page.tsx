@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { projects } from "@content";
 import { TechBadges } from "@/components/badges";
 
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Software engineering projects — computer vision, microservices, full-stack platforms, and games.",
+    "Software engineering projects - computer vision, microservices, full-stack platforms, and games.",
 };
 
 export default function ProjectsPage() {
@@ -19,10 +20,10 @@ export default function ProjectsPage() {
       <h1 className="mt-3 text-4xl font-bold tracking-tight">Projects</h1>
       <p className="mt-3 max-w-2xl text-muted">
         Each project is an arcade cabinet in the{" "}
-        <a href="/" className="text-cyan hover:underline">
+        <Link href="/" className="text-cyan hover:underline">
           game world
-        </a>{" "}
-        — one of them is actually playable. Can you find it?
+        </Link>{" "}
+        - one of them is actually playable. Can you find it?
       </p>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2">

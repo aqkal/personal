@@ -20,7 +20,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Pixel Portfolio — Software Engineer",
+    default: "Pixel Portfolio - Software Engineer",
     template: "%s · Pixel Portfolio",
   },
   description:

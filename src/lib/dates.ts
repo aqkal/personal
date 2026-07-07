@@ -19,9 +19,9 @@ export function formatYearMonth(ym: string): string {
   return `${MONTHS[Number(month) - 1]} ${year}`;
 }
 
-/** ("2024-10", null) -> "Oct 2024 — Present" */
+/** ("2024-10", null) -> "Oct 2024 - Present" */
 export function formatRange(start: string, end: string | null): string {
-  return `${formatYearMonth(start)} — ${end ? formatYearMonth(end) : "Present"}`;
+  return `${formatYearMonth(start)} - ${end ? formatYearMonth(end) : "Present"}`;
 }
 
 /** "2026-01-15" -> "15 Jan 2026" (blog dates) */

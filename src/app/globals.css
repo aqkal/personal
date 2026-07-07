@@ -8,10 +8,10 @@
   --color-line: #1e2a44;
   --color-ink: #dbe4f5;
   --color-muted: #8b9bb8;
-  --color-neon: #4ef08a; /* phosphor green — primary accent */
-  --color-magenta: #ff6bd6; /* arcade pink — secondary accent */
-  --color-amber: #ffc857; /* CRT amber — highlights */
-  --color-cyan: #53d8ff; /* scanline cyan — links/info */
+  --color-neon: #4ef08a; /* phosphor green - primary accent */
+  --color-magenta: #ff6bd6; /* arcade pink - secondary accent */
+  --color-amber: #ffc857; /* CRT amber - highlights */
+  --color-cyan: #53d8ff; /* scanline cyan - links/info */
 
   /* ---- Fonts (variables injected by next/font in layout.tsx) ---- */
   --font-pixel: var(--font-press-start), monospace;
@@ -130,7 +130,7 @@ body {
   }
 }
 
-/* Focus visibility — keyboard users must always see where they are */
+/* Focus visibility - keyboard users must always see where they are */
 :focus-visible {
   outline: 2px solid var(--color-neon);
   outline-offset: 2px;

@@ -1,12 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { ModeChooser } from "./mode-chooser";
 import { TerminalTeaser } from "./terminal-teaser";
 
 /**
- * Phaser and every game system live behind this dynamic import — the landing
+ * Three.js and every game system live behind this dynamic import; the landing
  * page and classic site ship ZERO game code (see Performance Budget in
  * docs/ARCHITECTURE.md).
  */
@@ -24,23 +24,40 @@ const GameShell = dynamic(
   },
 );
 
-type Mode = "boot" | "choose" | "game" | "terminal";
+type Mode = "choose" | "game" | "terminal";
 
 const STORAGE_KEY = "interface";
+const SERVER_SENTINEL = "__server__";
+
+function subscribeNever() {
+  return () => {};
+}
+
+function readStoredInterface(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export function HomeShell() {
-  const [mode, setMode] = useState<Mode>("boot");
+  // SSR renders a blank boot frame; the client snapshot kicks in on hydration
+  // (returning visitors who picked the game go straight back into it).
+  const stored = useSyncExternalStore(
+    subscribeNever,
+    readStoredInterface,
+    () => SERVER_SENTINEL,
+  );
+  const [override, setOverride] = useState<Mode | null>(null);
 
-  // Returning visitors who picked the game go straight back into it.
-  useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem(STORAGE_KEY);
-    } catch {
-      // storage blocked — fall through to the chooser
-    }
-    setMode(stored === "game" ? "game" : "choose");
-  }, []);
+  const mode: Mode | "boot" =
+    override ??
+    (stored === SERVER_SENTINEL
+      ? "boot"
+      : stored === "game"
+        ? "game"
+        : "choose");
 
   const choose = useCallback((next: "game" | "terminal") => {
     if (next === "game") {
@@ -50,7 +67,7 @@ export function HomeShell() {
         // non-fatal
       }
     }
-    setMode(next);
+    setOverride(next);
   }, []);
 
   const backToChooser = useCallback(() => {
@@ -59,7 +76,7 @@ export function HomeShell() {
     } catch {
       // non-fatal
     }
-    setMode("choose");
+    setOverride("choose");
   }, []);
 
   if (mode === "boot") {
@@ -71,7 +88,7 @@ export function HomeShell() {
   if (mode === "terminal") {
     return (
       <TerminalTeaser
-        onBack={() => setMode("choose")}
+        onBack={() => setOverride("choose")}
         onPlayGame={() => choose("game")}
       />
     );
