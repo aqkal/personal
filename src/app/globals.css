@@ -136,6 +136,31 @@ body {
   outline-offset: 2px;
 }
 
+/* Blog prose: code blocks rendered by rehype-pretty-code (shiki) */
+.prose-blog pre {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background-color: #0a0e1b !important;
+  padding: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.prose-blog :not(pre) > code {
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-raised);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+  color: var(--color-amber);
+}
+
+.prose-blog pre code {
+  display: grid;
+}
+
 /* Print styles for /resume */
 @media print {
   body {
