@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Retro-arcade night palette ---- */
+  --color-bg: #070b14;
+  --color-surface: #0d1424;
+  --color-raised: #131c30;
+  --color-line: #1e2a44;
+  --color-ink: #dbe4f5;
+  --color-muted: #8b9bb8;
+  --color-neon: #4ef08a; /* phosphor green — primary accent */
+  --color-magenta: #ff6bd6; /* arcade pink — secondary accent */
+  --color-amber: #ffc857; /* CRT amber — highlights */
+  --color-cyan: #53d8ff; /* scanline cyan — links/info */
+
+  /* ---- Fonts (variables injected by next/font in layout.tsx) ---- */
+  --font-pixel: var(--font-press-start), monospace;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-blink: blink 1.1s steps(2, start) infinite;
+
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
+  }
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  min-height: 100dvh;
+}
+
+::selection {
+  background-color: var(--color-neon);
+  color: var(--color-bg);
+}
+
+/* Subtle CRT scanline texture, used by immersive surfaces via .crt-scanlines */
+.crt-scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.14) 3px,
+    transparent 4px
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .crt-flicker {
+    animation: crt-flicker 8s infinite;
+  }
+}
+
+@keyframes crt-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0.96;
+  }
+  94% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.98;
+  }
+}
+
+/* Focus visibility — keyboard users must always see where they are */
+:focus-visible {
+  outline: 2px solid var(--color-neon);
+  outline-offset: 2px;
+}
+
+/* Print styles for /resume */
+@media print {
+  body {
+    background: #fff;
+    color: #111;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
