@@ -1,0 +1,40 @@
+import Link from "next/link";
+
+const links = [
+  { href: "/about", label: "About" },
+  { href: "/experience", label: "Experience" },
+  { href: "/projects", label: "Projects" },
+  { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact" },
+  { href: "/resume", label: "Resume" },
+];
+
+export function SiteNav() {
+  return (
+    <header className="no-print sticky top-0 z-50 border-b border-line bg-bg/85 backdrop-blur">
+      <nav
+        aria-label="Main"
+        className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-1 px-5 py-3"
+      >
+        <Link
+          href="/"
+          className="font-pixel text-[10px] text-neon transition-colors hover:text-amber"
+          title="Back to the world"
+        >
+          ▶ PLAY
+        </Link>
+        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-muted transition-colors hover:text-ink"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </header>
+  );
+}

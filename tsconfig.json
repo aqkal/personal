@@ -26,6 +26,9 @@
       "@/*": [
         "./src/*"
       ],
+      "@content": [
+        "./content/index.ts"
+      ],
       "@content/*": [
         "./content/*"
       ]
