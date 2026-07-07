@@ -8,7 +8,7 @@ content/*.ts  (Zod-validated single source of truth)
    |--> classic HTML pages   src/app/(classic)/*      SEO, recruiters, a11y
    |--> 3D world spawner     src/game3d/layout.ts     buildings from content
    |--> resume page          src/app/(classic)/resume print-friendly
-   |--> [v2] terminal        src/terminal/            same data, new shell
+   |--> terminal vFS         src/terminal/fs.ts       files from content
    |
 src/app/page.tsx -> HomeShell (client)
    boot -> mode chooser -> GameShell (dynamic import) -> World3D (three.js)
@@ -43,7 +43,19 @@ src/app/page.tsx -> HomeShell (client)
 - `state.ts`: mutable frame state (`playerPos`, `playerHeading`, `cameraOrbit`, `runtime.paused`, `joystick`, `activeTarget`). Dependency-free so HUD components can import it without pulling three.js.
 - Map UI (`src/components/game/world-map.tsx`): a live corner minimap and an M-key full map overlay with legend, both drawn on 2D canvas straight from `layout.ts` data.
 
-### 4. Game <-> React bridge (`src/game/bus.ts`)
+### 4. Terminal (`src/terminal/` + `src/components/terminal/`)
+
+- `fs.ts`: a virtual filesystem generated from `@content` (experience entries
+  become `~/experience/<id>.md`, and so on). Adding content adds files.
+- `commands.ts`: pure command registry, (input, cwd, history) -> printable
+  lines + optional action (clear/exit/play/snake/vim/theme/navigate). No DOM,
+  unit-testable.
+- `terminal-shell.tsx`: custom lightweight terminal UI (no xterm): boot
+  sequence, tab completion, arrow history, three phosphor themes, clickable
+  suggestion chips, aria-live scrollback, embedded Snake, vim easter egg.
+  Dynamically imported like the game; ships nothing to other pages.
+
+### 5. Game <-> React bridge (`src/game/bus.ts`)
 
 A typed `mitt` emitter. The world emits `panel:open` / `hint:show`; React overlays (`DialogPanel`, HUD) listen. React emits `panel:close` and `input:interact` (mobile button). Only discrete UI events cross the bus, never per-frame data.
 

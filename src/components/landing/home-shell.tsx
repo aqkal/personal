@@ -3,11 +3,10 @@
 import dynamic from "next/dynamic";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ModeChooser } from "./mode-chooser";
-import { TerminalTeaser } from "./terminal-teaser";
 
 /**
- * Three.js and every game system live behind this dynamic import; the landing
- * page and classic site ship ZERO game code (see Performance Budget in
+ * Both interfaces stay behind dynamic imports; the landing page and classic
+ * site ship zero game or terminal code (see Performance Budget in
  * docs/ARCHITECTURE.md).
  */
 const GameShell = dynamic(
@@ -18,6 +17,23 @@ const GameShell = dynamic(
       <div className="flex min-h-dvh items-center justify-center bg-bg">
         <p className="font-pixel text-xs text-neon">
           LOADING WORLD<span className="animate-blink">_</span>
+        </p>
+      </div>
+    ),
+  },
+);
+
+const TerminalShell = dynamic(
+  () =>
+    import("@/components/terminal/terminal-shell").then(
+      (mod) => mod.TerminalShell,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-dvh items-center justify-center bg-[#04070d]">
+        <p className="font-mono text-sm text-neon">
+          booting uq-os<span className="animate-blink">_</span>
         </p>
       </div>
     ),
@@ -43,7 +59,7 @@ function readStoredInterface(): string | null {
 
 export function HomeShell() {
   // SSR renders a blank boot frame; the client snapshot kicks in on hydration
-  // (returning visitors who picked the game go straight back into it).
+  // (returning visitors go straight back into their chosen interface).
   const stored = useSyncExternalStore(
     subscribeNever,
     readStoredInterface,
@@ -57,15 +73,15 @@ export function HomeShell() {
       ? "boot"
       : stored === "game"
         ? "game"
-        : "choose");
+        : stored === "terminal"
+          ? "terminal"
+          : "choose");
 
   const choose = useCallback((next: "game" | "terminal") => {
-    if (next === "game") {
-      try {
-        localStorage.setItem(STORAGE_KEY, "game");
-      } catch {
-        // non-fatal
-      }
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // non-fatal
     }
     setOverride(next);
   }, []);
@@ -87,10 +103,7 @@ export function HomeShell() {
   }
   if (mode === "terminal") {
     return (
-      <TerminalTeaser
-        onBack={() => setOverride("choose")}
-        onPlayGame={() => choose("game")}
-      />
+      <TerminalShell onExit={backToChooser} onPlayGame={() => choose("game")} />
     );
   }
   return <ModeChooser onChoose={choose} />;

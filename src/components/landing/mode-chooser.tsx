@@ -73,11 +73,10 @@ function TerminalScene() {
         <div className="hidden space-y-2 sm:block">
           <p>
             <span className="text-cyan">visitor@portfolio</span>
-            <span className="text-muted">:~$</span> ls ./interfaces
+            <span className="text-muted">:~$</span> ls ~/
           </p>
           <p className="text-ink/80">
-            game_world/{" "}
-            <span className="text-amber">terminal_v2 (building…)</span>
+            about.md experience/ projects/ skills/ education/
           </p>
         </div>
         <p>
@@ -86,8 +85,8 @@ function TerminalScene() {
           <span className="animate-blink">█</span>
         </p>
       </div>
-      <span className="absolute right-4 top-4 rounded border border-amber/50 bg-amber/10 px-2 py-0.5 font-pixel text-[8px] text-amber">
-        V2 · SOON
+      <span className="absolute right-4 top-4 rounded border border-neon/50 bg-neon/10 px-2 py-0.5 font-pixel text-[8px] text-neon">
+        ONLINE
       </span>
     </div>
   );
@@ -173,10 +172,10 @@ export function ModeChooser({
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 pt-14">
             <p className="font-pixel text-[10px] text-cyan">&gt;_ TERMINAL</p>
             <p className="mt-2 text-sm text-ink/85">
-              Command-line mode for keyboard purists. Shipping in v2.
+              Command-line mode for keyboard purists. Same resume, one prompt.
             </p>
             <p className="mt-3 inline-block rounded border border-cyan/60 bg-cyan/15 px-3 py-1 font-pixel text-[9px] text-cyan opacity-90 transition-all group-hover:bg-cyan/25">
-              PEEK INSIDE ▶
+              BOOT UP ▶
             </p>
           </div>
         </m.button>

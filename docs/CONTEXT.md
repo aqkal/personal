@@ -4,8 +4,8 @@
 
 A personal portfolio website for a University of Queensland Software Engineering student, built as an interactive experience rather than a static page. The site presents two interfaces on landing:
 
-1. **Game world (live)**: a stylized 3D scene of a sunny Brisbane day, inspired by UQ's St Lucia campus. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
-2. **Terminal (v2, planned)**: a command-line interface over the same content. The landing page shows it as a teaser; `src/terminal/` is reserved for it.
+1. **Game world**: a stylized 3D scene of a sunny Brisbane day, inspired by UQ's St Lucia campus. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
+2. **Terminal (UQ-OS)**: a command-line interface over the same content. The resume is mounted as a virtual filesystem (ls/cd/cat/tree/grep), with neofetch, an ASCII campus map, themes, Snake, and a `play` command that jumps into the 3D world.
 
 There is always a third path: the **classic site** (`/about`, `/experience`, `/projects`, `/blog`, `/contact`, `/resume`). This is what crawlers index, what reduced-motion users get offered, and what recruiters in a hurry click.
 
@@ -28,4 +28,4 @@ There is always a third path: the **classic site** (`/about`, `/experience`, `/p
 
 ## Status
 
-Built July 2026. The terminal interface and the owner's real name/social links (placeholders in `content/profile.ts`, marked TODO) are the known open items.
+Built July 2026, both interfaces live. The owner's real name/social links (placeholders in `content/profile.ts`, marked TODO) are the known open item.
