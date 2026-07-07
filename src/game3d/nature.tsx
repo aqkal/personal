@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { ShaderMaterial } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { ARCADE, GREAT_COURT, TREES } from "./layout";
+import { TOON } from "./materials";
 
 /**
  * Bright Brisbane day. Everything here is built for speed first: no shadow
@@ -115,7 +116,7 @@ export function Clouds() {
           rotation-y={c.rot}
           scale={c.s}
         >
-          <meshLambertMaterial color="#ffffff" emissive="#e8f2fb" emissiveIntensity={0.55} />
+          <meshToonMaterial gradientMap={TOON} color="#ffffff" emissive="#e8f2fb" emissiveIntensity={0.55} />
         </mesh>
       ))}
     </group>
@@ -162,7 +163,7 @@ export function Ground() {
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.02, 0]}>
       <planeGeometry args={[220, 220]} />
-      <meshLambertMaterial map={grass} />
+      <meshToonMaterial gradientMap={TOON} map={grass} />
     </mesh>
   );
 }
@@ -207,9 +208,29 @@ function useStoneTexture() {
   }, []);
 }
 
+function useLawnStripes() {
+  return useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = 64;
+    c.height = 8;
+    const ctx = c.getContext("2d")!;
+    for (let i = 0; i < 8; i++) {
+      ctx.fillStyle = i % 2 === 0 ? "#57ab5f" : "#4b9a54";
+      ctx.fillRect(i * 8, 0, 8, 8);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1.6, 1);
+    tex.magFilter = THREE.NearestFilter;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+}
+
 /** Paved paths + central plaza. */
 export function Paths() {
   const stone = useStoneTexture();
+  const lawnStripes = useLawnStripes();
   const strips = [
     { x: 0, z: 0, w: 3.6, d: 84 },
     { x: 0, z: 0, w: 84, d: 3.6 },
@@ -231,26 +252,26 @@ export function Paths() {
             rotation-x={-Math.PI / 2}
           >
             <planeGeometry args={[s.w, s.d]} />
-            <meshLambertMaterial map={tex} />
+            <meshToonMaterial gradientMap={TOON} map={tex} />
           </mesh>
         );
       })}
       <mesh position={[0, 0.03, 0]} rotation-x={-Math.PI / 2}>
         <circleGeometry args={[9.5, 48]} />
-        <meshLambertMaterial map={stone} />
+        <meshToonMaterial gradientMap={TOON} map={stone} />
       </mesh>
       <mesh position={[0, 0.04, 0]} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[5.6, 5.9, 48]} />
-        <meshLambertMaterial color="#b3a888" />
+        <meshToonMaterial gradientMap={TOON} color="#b3a888" />
       </mesh>
-      {/* Great Court lawn + inner ring path */}
+      {/* Great Court lawn (mowing stripes) + inner ring path */}
       <mesh position={[GREAT_COURT.center.x, 0.015, -21.5]} rotation-x={-Math.PI / 2}>
         <planeGeometry args={[19, 13]} />
-        <meshLambertMaterial color="#4f9e58" />
+        <meshToonMaterial gradientMap={TOON} map={lawnStripes} />
       </mesh>
       <mesh position={[GREAT_COURT.center.x, 0.022, -21.5]} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[5.2, 6.4, 40]} />
-        <meshLambertMaterial map={stone} />
+        <meshToonMaterial gradientMap={TOON} map={stone} />
       </mesh>
     </group>
   );
@@ -371,7 +392,7 @@ export function Skyline() {
     <group>
       <Instances limit={towers.length}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial />
+        <meshToonMaterial gradientMap={TOON} />
         {towers.map((t, i) => (
           <Instance
             key={i}
@@ -383,7 +404,7 @@ export function Skyline() {
       </Instances>
       <Instances limit={withAntenna.length}>
         <cylinderGeometry args={[0.08, 0.14, 4, 5]} />
-        <meshLambertMaterial color="#8b96ad" />
+        <meshToonMaterial gradientMap={TOON} color="#8b96ad" />
         {withAntenna.map((t, i) => (
           <Instance key={i} position={[t.x, t.h + 2, t.z]} />
         ))}
@@ -391,7 +412,7 @@ export function Skyline() {
       {/* far-bank strip */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.05, 74]}>
         <planeGeometry args={[240, 26]} />
-        <meshLambertMaterial color="#9cb89a" />
+        <meshToonMaterial gradientMap={TOON} color="#9cb89a" />
       </mesh>
     </group>
   );
@@ -411,18 +432,18 @@ export function Bridge() {
     <group>
       <mesh position={[0, 0.06, 50]}>
         <boxGeometry args={[4.6, 0.24, 16]} />
-        <meshLambertMaterial color="#8d9aae" />
+        <meshToonMaterial gradientMap={TOON} color="#8d9aae" />
       </mesh>
       {[-2.1, 2.1].map((x) => (
         <mesh key={x} position={[x, 0.7, 50]}>
           <boxGeometry args={[0.16, 1.1, 16]} />
-          <meshLambertMaterial color="#77839a" />
+          <meshToonMaterial gradientMap={TOON} color="#77839a" />
         </mesh>
       ))}
       {/* steel arch segments: one instanced call for both sides */}
       <Instances limit={arch.length * 2}>
         <boxGeometry args={[0.14, 0.5, 0.7]} />
-        <meshLambertMaterial color="#95a2b8" />
+        <meshToonMaterial gradientMap={TOON} color="#95a2b8" />
         {[-2.1, 2.1].flatMap((x) =>
           arch.map((p, i) => (
             <Instance key={`${x}-${i}`} position={[x, p.y, p.z]} />
@@ -432,7 +453,7 @@ export function Bridge() {
       {/* lookout deck */}
       <mesh position={[0, 0.04, 58.5]}>
         <cylinderGeometry args={[7, 7, 0.2, 24]} />
-        <meshLambertMaterial color="#aab4c4" />
+        <meshToonMaterial gradientMap={TOON} color="#aab4c4" />
       </mesh>
     </group>
   );
@@ -481,7 +502,7 @@ export function TreeField() {
       {/* trunks */}
       <Instances limit={TREES.length}>
         <cylinderGeometry args={[0.16, 0.3, 2.6, 7]} />
-        <meshLambertMaterial color="#6d5137" />
+        <meshToonMaterial gradientMap={TOON} color="#6d5137" />
         {TREES.map((t, i) => (
           <Instance
             key={i}
@@ -494,7 +515,7 @@ export function TreeField() {
       {/* canopy puffs (all trees, one call) */}
       <Instances limit={PUFFS.length}>
         <icosahedronGeometry args={[1.35, 1]} />
-        <meshLambertMaterial />
+        <meshToonMaterial gradientMap={TOON} />
         {PUFFS.map((p) => (
           <Instance
             key={p.key}
@@ -604,7 +625,7 @@ export function GrassTufts() {
 
   return (
     <Instances limit={spots.length} geometry={geometry} frustumCulled={false}>
-      <meshLambertMaterial
+      <meshToonMaterial gradientMap={TOON}
         alphaMap={alphaMap}
         transparent
         alphaTest={0.35}
@@ -620,6 +641,198 @@ export function GrassTufts() {
         />
       ))}
     </Instances>
+  );
+}
+
+/* ---------------------------------- set dressing ---------------------------------- */
+
+const BUSH_SPOTS = (() => {
+  const out: Array<{ x: number; z: number; s: number; c: string }> = [];
+  const r = lcg(2024);
+  const shades = ["#3f8a4c", "#357a42", "#4c9c58"];
+  // ring around the plaza, skipping the four road gaps
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const nearRoad =
+      Math.abs(Math.sin(a)) < 0.3 || Math.abs(Math.cos(a)) < 0.3;
+    if (nearRoad) continue;
+    out.push({ x: Math.cos(a) * 11.2, z: Math.sin(a) * 11.2, s: 0.8 + r() * 0.5, c: shades[i % 3] });
+  }
+  // court frontage
+  for (let x = -38; x <= -16; x += 4.4) {
+    if (Math.abs(x + 27) < 4) continue;
+    out.push({ x, z: -11.3, s: 0.9 + r() * 0.4, c: shades[Math.floor(r() * 3)] });
+  }
+  // café, post office, career, arcade, garden edges
+  const clusters: Array<[number, number]> = [
+    [-35, 8.6], [-31, 8.2], [35, 8.6], [31, 8.2],
+    [20, -21], [28, -13], [36, -22],
+    [17, 20], [37, 20], [-18, 26], [-36, 26],
+  ];
+  for (const [x, z] of clusters) {
+    out.push({ x, z, s: 0.8 + r() * 0.6, c: shades[Math.floor(r() * 3)] });
+  }
+  return out;
+})();
+
+const FLOWER_SPOTS = (() => {
+  const r = lcg(909);
+  const colors = ["#ff7ab8", "#ffd166", "#fff4f0", "#ff9f5b", "#c78bff"];
+  const out: Array<{ x: number; z: number; c: string }> = [];
+  const scatter = (cx: number, cz: number, rx: number, rz: number, n: number) => {
+    for (let i = 0; i < n; i++) {
+      out.push({
+        x: cx + (r() - 0.5) * rx * 2,
+        z: cz + (r() - 0.5) * rz * 2,
+        c: colors[Math.floor(r() * colors.length)],
+      });
+    }
+  };
+  scatter(-27, 22, 6.5, 5.5, 60); // skills garden beds
+  scatter(-27, -21.5, 8, 5, 26); // court lawn
+  for (let i = 0; i < 40; i++) {
+    const a = r() * Math.PI * 2;
+    const rad = 10.4 + r() * 1.4;
+    out.push({ x: Math.cos(a) * rad, z: Math.sin(a) * rad, c: colors[Math.floor(r() * colors.length)] });
+  }
+  return out;
+})();
+
+const ROCK_SPOTS = (() => {
+  const r = lcg(313);
+  const out: Array<{ x: number; z: number; s: number; ry: number }> = [];
+  for (let i = 0; i < 14; i++) {
+    out.push({ x: -40 + r() * 80, z: 38.2 + r() * 2.2, s: 0.25 + r() * 0.4, ry: r() * Math.PI });
+  }
+  for (const [x, z] of [[-8, -8.5], [8.5, -9.5], [14.5, 10.5], [-14, 11], [40, -9]] as const) {
+    out.push({ x, z, s: 0.3 + r() * 0.35, ry: r() * Math.PI });
+  }
+  return out;
+})();
+
+/** Bushes, flower beds, and rocks: three instanced draw calls of charm. */
+export function SetDressing() {
+  return (
+    <group>
+      <Instances limit={BUSH_SPOTS.length}>
+        <icosahedronGeometry args={[0.9, 1]} />
+        <meshToonMaterial gradientMap={TOON} />
+        {BUSH_SPOTS.map((b, i) => (
+          <Instance
+            key={i}
+            position={[b.x, 0.45 * b.s, b.z]}
+            scale={[b.s, b.s * 0.75, b.s]}
+            color={b.c}
+          />
+        ))}
+      </Instances>
+      <Instances limit={FLOWER_SPOTS.length}>
+        <sphereGeometry args={[0.09, 6, 6]} />
+        <meshBasicMaterial />
+        {FLOWER_SPOTS.map((f, i) => (
+          <Instance key={i} position={[f.x, 0.14, f.z]} color={f.c} />
+        ))}
+      </Instances>
+      <Instances limit={ROCK_SPOTS.length}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshToonMaterial gradientMap={TOON} color="#a3adba" />
+        {ROCK_SPOTS.map((rk, i) => (
+          <Instance
+            key={i}
+            position={[rk.x, rk.s * 0.5, rk.z]}
+            rotation={[0, rk.ry, 0]}
+            scale={[rk.s, rk.s * 0.7, rk.s]}
+          />
+        ))}
+      </Instances>
+    </group>
+  );
+}
+
+/** A lazy flock circling over the river. */
+export function Birds() {
+  const geometry = useMemo(() => {
+    const a = new THREE.BoxGeometry(0.5, 0.04, 0.14);
+    a.rotateZ(0.5);
+    a.translate(-0.2, 0, 0);
+    const b = new THREE.BoxGeometry(0.5, 0.04, 0.14);
+    b.rotateZ(-0.5);
+    b.translate(0.2, 0, 0);
+    return mergeGeometries([a, b]);
+  }, []);
+  const offsets = useMemo(() => {
+    const r = lcg(432);
+    return Array.from({ length: 7 }, () => ({
+      rad: 5 + r() * 9,
+      a: r() * Math.PI * 2,
+      y: (r() - 0.5) * 3,
+      s: 0.8 + r() * 0.6,
+    }));
+  }, []);
+  const group = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    if (group.current) group.current.rotation.y += dt * 0.22;
+  });
+  return (
+    <group ref={group} position={[6, 25, 34]}>
+      {offsets.map((o, i) => (
+        <mesh
+          key={i}
+          geometry={geometry}
+          position={[Math.cos(o.a) * o.rad, o.y, Math.sin(o.a) * o.rad]}
+          rotation-y={-o.a}
+          scale={o.s}
+        >
+          <meshBasicMaterial color="#42505f" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** Little sailboats drifting the south reach. */
+function Sailboat({ startX, z, speed, sail }: { startX: number; z: number; speed: number; sail: string }) {
+  const group = useRef<THREE.Group>(null);
+  const sailShape = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(0, 1.5);
+    shape.lineTo(0.95, 0);
+    shape.lineTo(0, 0);
+    return new THREE.ShapeGeometry(shape);
+  }, []);
+  useFrame(({ clock }, dt) => {
+    const g = group.current;
+    if (!g) return;
+    g.position.x += speed * dt;
+    if (g.position.x > 55) g.position.x = -55;
+    g.position.y = -0.06 + Math.sin(clock.elapsedTime * 1.3 + startX) * 0.05;
+    g.rotation.z = Math.sin(clock.elapsedTime * 0.9 + startX) * 0.04;
+  });
+  return (
+    <group ref={group} position={[startX, -0.06, z]}>
+      <mesh position={[0, 0.16, 0]}>
+        <boxGeometry args={[1.7, 0.34, 0.7]} />
+        <meshToonMaterial gradientMap={TOON} color="#e8e2d4" />
+      </mesh>
+      <mesh position={[0, 0.65, 0]}>
+        <cylinderGeometry args={[0.03, 0.03, 1.7, 6]} />
+        <meshToonMaterial gradientMap={TOON} color="#6d5137" />
+      </mesh>
+      <mesh geometry={sailShape} position={[0.06, 0.6, 0]}>
+        <meshToonMaterial gradientMap={TOON} color={sail} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
+export function Boats() {
+  return (
+    <group>
+      <Sailboat startX={-24} z={49.5} speed={1.1} sail="#ff8a5c" />
+      <Sailboat startX={18} z={53.5} speed={-0.8} sail="#6fc3ff" />
+      <Sailboat startX={44} z={51} speed={0.9} sail="#ffd166" />
+    </group>
   );
 }
 

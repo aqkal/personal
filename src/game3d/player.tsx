@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
 import { isBlocked, PLAYER_START } from "./layout";
+import { TOON } from "./materials";
 import {
   cameraOrbit,
   joystick,
@@ -159,39 +160,55 @@ export function Player() {
         {/* torso: UQ purple hoodie */}
         <mesh position={[0, 1.02, 0]} castShadow>
           <capsuleGeometry args={[0.26, 0.42, 6, 12]} />
-          <meshStandardMaterial color="#6a3ba3" roughness={0.8} />
+          <meshToonMaterial gradientMap={TOON} color="#6a3ba3" />
         </mesh>
         {/* hood bump */}
         <mesh position={[0, 1.32, -0.14]} castShadow>
           <sphereGeometry args={[0.16, 10, 10]} />
-          <meshStandardMaterial color="#5b3190" roughness={0.85} />
+          <meshToonMaterial gradientMap={TOON} color="#5b3190" />
         </mesh>
         {/* backpack: every student has one */}
         <mesh position={[0, 1.08, -0.3]} castShadow>
           <boxGeometry args={[0.34, 0.44, 0.18]} />
-          <meshStandardMaterial color="#e0a33c" roughness={0.85} />
+          <meshToonMaterial gradientMap={TOON} color="#e0a33c" />
         </mesh>
         {/* head */}
         <mesh position={[0, 1.66, 0]} castShadow>
           <sphereGeometry args={[0.24, 18, 18]} />
-          <meshStandardMaterial color="#f2c89b" roughness={0.75} />
+          <meshToonMaterial gradientMap={TOON} color="#f2c89b" />
         </mesh>
-        {/* hair cap */}
-        <mesh position={[0, 1.76, -0.02]}>
+        {/* eyes */}
+        {[-0.085, 0.085].map((x) => (
+          <mesh key={x} position={[x, 1.69, 0.205]}>
+            <sphereGeometry args={[0.032, 8, 8]} />
+            <meshBasicMaterial color="#26211c" />
+          </mesh>
+        ))}
+        {/* hair */}
+        <mesh position={[0, 1.74, -0.02]}>
           <sphereGeometry args={[0.245, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-          <meshStandardMaterial color="#33241a" roughness={0.95} />
+          <meshToonMaterial gradientMap={TOON} color="#33241a" />
+        </mesh>
+        {/* UQ cap + brim */}
+        <mesh position={[0, 1.82, 0]}>
+          <sphereGeometry args={[0.235, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.4]} />
+          <meshToonMaterial gradientMap={TOON} color="#51247a" />
+        </mesh>
+        <mesh position={[0, 1.84, 0.19]} rotation-x={-0.12}>
+          <boxGeometry args={[0.3, 0.04, 0.24]} />
+          <meshToonMaterial gradientMap={TOON} color="#51247a" />
         </mesh>
         {/* arms */}
         <group ref={armL} position={[-0.34, 1.28, 0]}>
           <mesh position={[0, -0.26, 0]} castShadow>
             <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshStandardMaterial color="#5b3190" roughness={0.8} />
+            <meshToonMaterial gradientMap={TOON} color="#5b3190" />
           </mesh>
         </group>
         <group ref={armR} position={[0.34, 1.28, 0]}>
           <mesh position={[0, -0.26, 0]} castShadow>
             <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshStandardMaterial color="#5b3190" roughness={0.8} />
+            <meshToonMaterial gradientMap={TOON} color="#5b3190" />
           </mesh>
         </group>
       </group>
@@ -199,13 +216,13 @@ export function Player() {
       <group ref={legL} position={[-0.13, 0.62, 0]}>
         <mesh position={[0, -0.28, 0]} castShadow>
           <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
-          <meshStandardMaterial color="#26324f" roughness={0.9} />
+          <meshToonMaterial gradientMap={TOON} color="#26324f" />
         </mesh>
       </group>
       <group ref={legR} position={[0.13, 0.62, 0]}>
         <mesh position={[0, -0.28, 0]} castShadow>
           <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
-          <meshStandardMaterial color="#26324f" roughness={0.9} />
+          <meshToonMaterial gradientMap={TOON} color="#26324f" />
         </mesh>
       </group>
       {/* soft blob shadow */}

@@ -6,10 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import { gameBus } from "@/game/bus";
 import {
   Arcade,
+  Benches,
   Cafe,
   CareerDistrict,
   Fountain,
   GreatCourt,
+  PlazaBunting,
   PostOffice,
   SkillsGarden,
   StreetLamps,
@@ -19,6 +21,8 @@ import {
 import { CameraControls } from "./camera-controls";
 import { Interactions } from "./interactions";
 import {
+  Birds,
+  Boats,
   Bridge,
   Butterflies,
   Clouds,
@@ -26,6 +30,7 @@ import {
   Ground,
   Paths,
   River,
+  SetDressing,
   SkyDome,
   Skyline,
   TreeField,
@@ -148,6 +153,11 @@ export default function World3D({
         {!softGL && <GrassTufts />}
         <StreetLamps />
         <StructureShadows />
+        <SetDressing />
+        <Benches />
+        <PlazaBunting />
+        {!reducedMotion && <Birds />}
+        {!reducedMotion && <Boats />}
 
         <GreatCourt />
         <CareerDistrict />

@@ -4,6 +4,7 @@ import { Html, Instance, Instances, Sparkles } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
   ARCADE,
   CABINETS,
@@ -15,6 +16,7 @@ import {
   POST,
   ZONE_LABELS,
 } from "./layout";
+import { TOON, roundedBox } from "./materials";
 import { lcg } from "./nature";
 import { playerPos } from "./state";
 
@@ -240,11 +242,11 @@ export function GreatCourt() {
         <group key={i}>
           <mesh position={[w.x, w.h / 2, w.z]}>
             <boxGeometry args={[w.hw * 2, w.h, w.hd * 2]} />
-            <meshLambertMaterial map={wingTexture(w.hw, w.h)} />
+            <meshToonMaterial gradientMap={TOON} map={wingTexture(w.hw, w.h)} />
           </mesh>
           <mesh position={[w.x, w.h + 0.35, w.z]}>
             <boxGeometry args={[w.hw * 2 + 0.6, 0.7, w.hd * 2 + 0.6]} />
-            <meshLambertMaterial color={SANDSTONE_DARK} />
+            <meshToonMaterial gradientMap={TOON} color={SANDSTONE_DARK} />
           </mesh>
         </group>
       ))}
@@ -252,85 +254,94 @@ export function GreatCourt() {
       {/* arched windows on the court-facing facades */}
       <mesh position={[northWing.x, northWing.h * 0.6, northWing.z + northWing.hd + 0.03]}>
         <planeGeometry args={[northWing.hw * 2 - 1.5, northWing.h * 0.45]} />
-        <meshLambertMaterial map={archesWide} />
+        <meshToonMaterial gradientMap={TOON} map={archesWide} />
       </mesh>
       <mesh
         position={[westWing.x + westWing.hw + 0.03, westWing.h * 0.6, westWing.z]}
         rotation-y={Math.PI / 2}
       >
         <planeGeometry args={[westWing.hd * 2 - 1.5, westWing.h * 0.45]} />
-        <meshLambertMaterial map={archesSide} />
+        <meshToonMaterial gradientMap={TOON} map={archesSide} />
       </mesh>
       <mesh
         position={[eastWing.x - eastWing.hw - 0.03, eastWing.h * 0.6, eastWing.z]}
         rotation-y={-Math.PI / 2}
       >
         <planeGeometry args={[eastWing.hd * 2 - 1.5, eastWing.h * 0.45]} />
-        <meshLambertMaterial map={archesSide} />
+        <meshToonMaterial gradientMap={TOON} map={archesSide} />
       </mesh>
 
       {/* cloister colonnade: columns + capitals + lintels + shaded walkway */}
       <Instances limit={columns.length}>
         <cylinderGeometry args={[0.2, 0.25, 3, 8]} />
-        <meshLambertMaterial color={SANDSTONE} />
+        <meshToonMaterial gradientMap={TOON} color={SANDSTONE} />
         {columns.map((p, i) => (
           <Instance key={i} position={p} />
         ))}
       </Instances>
       <Instances limit={columns.length}>
         <boxGeometry args={[0.55, 0.22, 0.55]} />
-        <meshLambertMaterial color={SANDSTONE_DARK} />
+        <meshToonMaterial gradientMap={TOON} color={SANDSTONE_DARK} />
         {columns.map((p, i) => (
           <Instance key={i} position={[p[0], 3.05, p[2]]} />
         ))}
       </Instances>
       <mesh position={[GREAT_COURT.center.x, 3.35, northWing.z + northWing.hd + 0.7]}>
         <boxGeometry args={[northWing.hw * 2 - 1, 0.4, 0.8]} />
-        <meshLambertMaterial color={SANDSTONE} />
+        <meshToonMaterial gradientMap={TOON} color={SANDSTONE} />
       </mesh>
       {[westWing.x + westWing.hw + 0.7, eastWing.x - eastWing.hw - 0.7].map((x) => (
         <mesh key={x} position={[x, 3.35, westWing.z]}>
           <boxGeometry args={[0.8, 0.4, westWing.hd * 2 - 1]} />
-          <meshLambertMaterial color={SANDSTONE} />
+          <meshToonMaterial gradientMap={TOON} color={SANDSTONE} />
         </mesh>
       ))}
       {/* shaded cloister recess behind the columns */}
       <mesh position={[GREAT_COURT.center.x, 1.4, northWing.z + northWing.hd + 0.08]}>
         <planeGeometry args={[northWing.hw * 2 - 1.5, 2.6]} />
-        <meshLambertMaterial color="#6e5c40" />
+        <meshToonMaterial gradientMap={TOON} color="#6e5c40" />
       </mesh>
 
       {/* south entrance gate */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[gate.x + side * gate.halfOpening, gate.h / 2, gate.z]}>
           <boxGeometry args={[1, gate.h, 1.4]} />
-          <meshLambertMaterial map={wingTexture(1, gate.h)} />
+          <meshToonMaterial gradientMap={TOON} map={wingTexture(1, gate.h)} />
         </mesh>
       ))}
       <mesh position={[gate.x, gate.h - 0.5, gate.z]}>
         <boxGeometry args={[gate.halfOpening * 2 + 1, 1.2, 1.6]} />
-        <meshLambertMaterial color={SANDSTONE_DARK} />
+        <meshToonMaterial gradientMap={TOON} color={SANDSTONE_DARK} />
       </mesh>
 
       {/* clock tower */}
       <group position={[tower.x, 0, tower.z]}>
         <mesh position={[0, tower.h / 2, 0]}>
           <boxGeometry args={[tower.w, tower.h, tower.w]} />
-          <meshLambertMaterial map={wingTexture(tower.w / 2, tower.h)} />
+          <meshToonMaterial gradientMap={TOON} map={wingTexture(tower.w / 2, tower.h)} />
         </mesh>
         <mesh position={[0, tower.h + 0.3, 0]}>
           <boxGeometry args={[tower.w + 0.7, 0.6, tower.w + 0.7]} />
-          <meshLambertMaterial color={SANDSTONE_DARK} />
+          <meshToonMaterial gradientMap={TOON} color={SANDSTONE_DARK} />
         </mesh>
         {[0, Math.PI / 2].map((ry) => (
           <mesh key={ry} position={[0, tower.h - 5.2, 0]} rotation-y={ry}>
             <boxGeometry args={[tower.w + 0.06, 1.6, 1.1]} />
-            <meshLambertMaterial color="#4a4034" />
+            <meshToonMaterial gradientMap={TOON} color="#4a4034" />
           </mesh>
         ))}
         <mesh position={[0, tower.h + 1.7, 0]}>
           <coneGeometry args={[tower.w * 0.78, 2.6, 4]} />
-          <meshLambertMaterial color="#7a6894" />
+          <meshToonMaterial gradientMap={TOON} color="#7a6894" />
+        </mesh>
+        {/* UQ flag over the tower */}
+        <mesh position={[0, tower.h + 4, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 2.4, 6]} />
+          <meshToonMaterial gradientMap={TOON} color="#5c5346" />
+        </mesh>
+        <mesh position={[0.62, tower.h + 4.75, 0]}>
+          <planeGeometry args={[1.15, 0.6]} />
+          <meshToonMaterial gradientMap={TOON} color="#51247a" side={THREE.DoubleSide} />
         </mesh>
         {[0, Math.PI].map((ry) => (
           <mesh
@@ -339,7 +350,7 @@ export function GreatCourt() {
             rotation-y={ry}
           >
             <planeGeometry args={[2, 2]} />
-            <meshLambertMaterial map={clockFace} />
+            <meshToonMaterial gradientMap={TOON} map={clockFace} />
           </mesh>
         ))}
       </group>
@@ -348,11 +359,11 @@ export function GreatCourt() {
       <group position={[GREAT_COURT.plaque.x, 0, GREAT_COURT.plaque.z]}>
         <mesh position={[0, 0.55, 0]} rotation-x={-0.25}>
           <boxGeometry args={[1, 0.8, 0.14]} />
-          <meshLambertMaterial color="#8f9ab2" />
+          <meshToonMaterial gradientMap={TOON} color="#8f9ab2" />
         </mesh>
         <mesh position={[0, 0.15, 0]}>
           <boxGeometry args={[0.5, 0.36, 0.3]} />
-          <meshLambertMaterial color="#6b7488" />
+          <meshToonMaterial gradientMap={TOON} color="#6b7488" />
         </mesh>
       </group>
     </group>
@@ -373,28 +384,31 @@ export function CareerDistrict() {
 
 function OfficeTower({ spec }: { spec: (typeof OFFICES)[number] }) {
   const windows = useGlassWindows(8, 14);
+  const body = useMemo(
+    () => roundedBox(spec.w, spec.h, spec.d, 0.45),
+    [spec.w, spec.h, spec.d],
+  );
   return (
     <group position={[spec.x, 0, spec.z]}>
-      <mesh position={[0, spec.h / 2, 0]}>
-        <boxGeometry args={[spec.w, spec.h, spec.d]} />
-        <meshLambertMaterial map={windows} />
+      <mesh position={[0, spec.h / 2, 0]} geometry={body}>
+        <meshToonMaterial gradientMap={TOON} map={windows} />
       </mesh>
       <mesh position={[0, spec.h + 0.25, 0]}>
         <boxGeometry args={[spec.w + 0.4, 0.5, spec.d + 0.4]} />
-        <meshLambertMaterial color="#5b6b85" />
+        <meshToonMaterial gradientMap={TOON} color="#5b6b85" />
       </mesh>
       <mesh position={[0, spec.h + 0.8, 0]}>
         <sphereGeometry args={[0.22, 10, 10]} />
-        <meshLambertMaterial color={spec.accent} />
+        <meshToonMaterial gradientMap={TOON} color={spec.accent} />
       </mesh>
       {/* entrance awning */}
       <mesh position={[0, 2.3, spec.d / 2 + 0.5]}>
         <boxGeometry args={[2.6, 0.15, 1.2]} />
-        <meshLambertMaterial color={spec.accent} />
+        <meshToonMaterial gradientMap={TOON} color={spec.accent} />
       </mesh>
       <mesh position={[0, 1.1, spec.d / 2 + 0.02]}>
         <planeGeometry args={[1.8, 2.2]} />
-        <meshLambertMaterial color="#2e3d52" />
+        <meshToonMaterial gradientMap={TOON} color="#2e3d52" />
       </mesh>
       <Label position={[0, spec.h + 2.2, 0]} accent="#1f5e8a">
         {spec.label.toUpperCase()}
@@ -406,29 +420,29 @@ function OfficeTower({ spec }: { spec: (typeof OFFICES)[number] }) {
 /* ---------------------------------- café + post office ---------------------------------- */
 
 export function Cafe() {
+  const body = useMemo(() => roundedBox(CAFE.w, 3.2, CAFE.d, 0.3), []);
   return (
     <group position={[CAFE.x, 0, CAFE.z]}>
-      <mesh position={[0, 1.6, 0]}>
-        <boxGeometry args={[CAFE.w, 3.2, CAFE.d]} />
-        <meshLambertMaterial color="#a9795a" />
+      <mesh position={[0, 1.6, 0]} geometry={body}>
+        <meshToonMaterial gradientMap={TOON} color="#a9795a" />
       </mesh>
       <mesh position={[0, 3.5, 0]}>
         <coneGeometry args={[CAFE.w * 0.78, 1.6, 4]} />
-        <meshLambertMaterial color="#6e4a33" />
+        <meshToonMaterial gradientMap={TOON} color="#6e4a33" />
       </mesh>
       {[0, 1, 2, 3].map((i) => (
         <mesh key={i} position={[CAFE.w / 2 + 0.5, 2.35, -1.5 + i]} rotation-z={-0.5}>
           <boxGeometry args={[1.3, 0.06, 0.98]} />
-          <meshLambertMaterial color={i % 2 === 0 ? "#2e9e5b" : "#f5f7fa"} />
+          <meshToonMaterial gradientMap={TOON} color={i % 2 === 0 ? "#2e9e5b" : "#f5f7fa"} />
         </mesh>
       ))}
       <mesh position={[CAFE.w / 2 + 0.02, 1.2, 1.4]} rotation-y={Math.PI / 2}>
         <planeGeometry args={[1.4, 2.2]} />
-        <meshLambertMaterial color="#3d3228" />
+        <meshToonMaterial gradientMap={TOON} color="#3d3228" />
       </mesh>
       <mesh position={[CAFE.w / 2 + 0.02, 1.7, -1.4]} rotation-y={Math.PI / 2}>
         <planeGeometry args={[1.7, 1.1]} />
-        <meshLambertMaterial color="#bcd7ea" />
+        <meshToonMaterial gradientMap={TOON} color="#bcd7ea" />
       </mesh>
       {/* steam over the roof vent */}
       <Sparkles count={8} position={[0.8, 4.6, 0]} scale={[0.8, 1.6, 0.8]} size={1.6} speed={0.5} color="#ffffff" />
@@ -437,23 +451,23 @@ export function Cafe() {
 }
 
 export function PostOffice() {
+  const body = useMemo(() => roundedBox(POST.w, 3.4, POST.d, 0.3), []);
   return (
     <group position={[POST.x, 0, POST.z]}>
-      <mesh position={[0, 1.7, 0]}>
-        <boxGeometry args={[POST.w, 3.4, POST.d]} />
-        <meshLambertMaterial color="#8fa3c6" />
+      <mesh position={[0, 1.7, 0]} geometry={body}>
+        <meshToonMaterial gradientMap={TOON} color="#8fa3c6" />
       </mesh>
       <mesh position={[0, 3.75, 0]}>
         <boxGeometry args={[POST.w + 0.5, 0.7, POST.d + 0.5]} />
-        <meshLambertMaterial color="#d1544f" />
+        <meshToonMaterial gradientMap={TOON} color="#d1544f" />
       </mesh>
       <mesh position={[-POST.w / 2 - 0.02, 1.2, 0]} rotation-y={-Math.PI / 2}>
         <planeGeometry args={[1.5, 2.3]} />
-        <meshLambertMaterial color="#33404f" />
+        <meshToonMaterial gradientMap={TOON} color="#33404f" />
       </mesh>
       <mesh position={[-POST.w / 2 - 1.4, 0.55, 1.6]}>
         <cylinderGeometry args={[0.28, 0.28, 1.1, 10]} />
-        <meshLambertMaterial color="#d1544f" />
+        <meshToonMaterial gradientMap={TOON} color="#d1544f" />
       </mesh>
     </group>
   );
@@ -466,12 +480,12 @@ export function Arcade() {
     <group>
       <mesh position={[ARCADE.x, 4.4, ARCADE.z - 1]}>
         <boxGeometry args={[ARCADE.hw * 2 + 1.5, 0.35, 5.5]} />
-        <meshLambertMaterial color="#46527a" />
+        <meshToonMaterial gradientMap={TOON} color="#46527a" />
       </mesh>
       {[ARCADE.x - ARCADE.hw - 0.4, ARCADE.x + ARCADE.hw + 0.4].map((x) => (
         <mesh key={x} position={[x, 2.2, ARCADE.z + 0.8]}>
           <cylinderGeometry args={[0.14, 0.14, 4.4, 8]} />
-          <meshLambertMaterial color="#5b6890" />
+          <meshToonMaterial gradientMap={TOON} color="#5b6890" />
         </mesh>
       ))}
       {/* front strip keeps the arcade pink, just not glowing */}
@@ -486,12 +500,13 @@ export function Arcade() {
   );
 }
 
+const CABINET_BODY = roundedBox(1.15, 1.9, 0.95, 0.1);
+
 function ArcadeCabinet({ spec }: { spec: (typeof CABINETS)[number] }) {
   return (
     <group position={[spec.x, 0, spec.z]}>
-      <mesh position={[0, 0.95, 0]}>
-        <boxGeometry args={[1.15, 1.9, 0.95]} />
-        <meshLambertMaterial color="#39415f" />
+      <mesh position={[0, 0.95, 0]} geometry={CABINET_BODY}>
+        <meshToonMaterial gradientMap={TOON} color="#39415f" />
       </mesh>
       <mesh position={[0, 1.98, 0.1]}>
         <boxGeometry args={[1.15, 0.28, 0.75]} />
@@ -504,7 +519,7 @@ function ArcadeCabinet({ spec }: { spec: (typeof CABINETS)[number] }) {
       </mesh>
       <mesh position={[0, 0.92, 0.55]} rotation-x={0.5}>
         <boxGeometry args={[1.05, 0.1, 0.5]} />
-        <meshLambertMaterial color="#4b5478" />
+        <meshToonMaterial gradientMap={TOON} color="#4b5478" />
       </mesh>
       <Label
         position={[0, 2.6, 0]}
@@ -542,11 +557,11 @@ function Crystal({ spec }: { spec: (typeof CRYSTALS)[number] }) {
     <group position={[spec.x, 0, spec.z]}>
       <mesh position={[0, 0.3, 0]}>
         <cylinderGeometry args={[0.55, 0.75, 0.6, 6]} />
-        <meshLambertMaterial color="#9aa4b8" />
+        <meshToonMaterial gradientMap={TOON} color="#9aa4b8" />
       </mesh>
       <mesh ref={ref} position={[0, 1.5, 0]}>
         <octahedronGeometry args={[0.5, 0]} />
-        <meshLambertMaterial
+        <meshToonMaterial gradientMap={TOON}
           color={spec.accent}
           emissive={spec.accent}
           emissiveIntensity={0.35}
@@ -571,18 +586,116 @@ export function Fountain() {
     <group>
       <mesh position={[0, 0.4, 0]}>
         <cylinderGeometry args={[2.7, 2.9, 0.8, 24]} />
-        <meshLambertMaterial color="#a8b0c2" />
+        <meshToonMaterial gradientMap={TOON} color="#b9c1d2" />
       </mesh>
       <mesh position={[0, 0.72, 0]}>
         <cylinderGeometry args={[2.35, 2.35, 0.14, 24]} />
-        <meshLambertMaterial color="#4e94d4" />
+        <meshToonMaterial gradientMap={TOON} color="#54b0e8" />
       </mesh>
-      <mesh position={[0, 1.15, 0]}>
-        <cylinderGeometry args={[0.3, 0.42, 1, 12]} />
-        <meshLambertMaterial color="#a8b0c2" />
+      {/* second tier bowl */}
+      <mesh position={[0, 1.1, 0]}>
+        <cylinderGeometry args={[0.34, 0.44, 0.8, 12]} />
+        <meshToonMaterial gradientMap={TOON} color="#b9c1d2" />
       </mesh>
-      <Sparkles count={22} position={[0, 1.6, 0]} scale={[2.4, 1.2, 2.4]} size={2} speed={0.8} color="#eaf6ff" />
+      <mesh position={[0, 1.55, 0]}>
+        <cylinderGeometry args={[1.15, 0.85, 0.3, 18]} />
+        <meshToonMaterial gradientMap={TOON} color="#b9c1d2" />
+      </mesh>
+      <mesh position={[0, 1.72, 0]}>
+        <cylinderGeometry args={[1.0, 1.0, 0.08, 18]} />
+        <meshToonMaterial gradientMap={TOON} color="#7fd0ee" />
+      </mesh>
+      {/* jet */}
+      <mesh position={[0, 2.15, 0]}>
+        <coneGeometry args={[0.16, 0.9, 10]} />
+        <meshBasicMaterial color="#bfe6f8" transparent opacity={0.65} />
+      </mesh>
+      <Sparkles count={26} position={[0, 1.9, 0]} scale={[2.6, 1.6, 2.6]} size={2.2} speed={0.9} color="#eaf6ff" />
     </group>
+  );
+}
+
+/* ---------------------------------- plaza bunting + benches ---------------------------------- */
+
+const PENNANT = (() => {
+  const shape = new THREE.Shape();
+  shape.moveTo(-0.16, 0);
+  shape.lineTo(0.16, 0);
+  shape.lineTo(0, -0.42);
+  shape.lineTo(-0.16, 0);
+  return new THREE.ShapeGeometry(shape);
+})();
+
+const PENNANT_COLORS = ["#ff6bd6", "#53d8ff", "#4ef08a", "#ffd166", "#b18cff", "#ff8f6b"];
+
+/** Festival bunting strung between the four plaza lamps. */
+export function PlazaBunting() {
+  const pennants = useMemo(() => {
+    const corners: Array<[number, number]> = [
+      [-7, -7], [7, -7], [7, 7], [-7, 7], [-7, -7],
+    ];
+    const out: Array<{ pos: [number, number, number]; ry: number; c: string }> = [];
+    for (let e = 0; e < 4; e++) {
+      const [x0, z0] = corners[e];
+      const [x1, z1] = corners[e + 1];
+      const alongX = z0 === z1;
+      for (let i = 1; i <= 7; i++) {
+        const t = i / 8;
+        out.push({
+          pos: [
+            x0 + (x1 - x0) * t,
+            3.12 - Math.sin(t * Math.PI) * 0.5,
+            z0 + (z1 - z0) * t,
+          ],
+          ry: alongX ? 0 : Math.PI / 2,
+          c: PENNANT_COLORS[(e * 7 + i) % PENNANT_COLORS.length],
+        });
+      }
+    }
+    return out;
+  }, []);
+  return (
+    <Instances limit={pennants.length} geometry={PENNANT}>
+      <meshBasicMaterial side={THREE.DoubleSide} />
+      {pennants.map((p, i) => (
+        <Instance key={i} position={p.pos} rotation={[0, p.ry, 0]} color={p.c} />
+      ))}
+    </Instances>
+  );
+}
+
+const BENCH = (() => {
+  const seat = new THREE.BoxGeometry(1.5, 0.09, 0.45);
+  seat.translate(0, 0.46, 0);
+  const back = new THREE.BoxGeometry(1.5, 0.4, 0.07);
+  back.translate(0, 0.78, -0.2);
+  const legA = new THREE.BoxGeometry(0.08, 0.46, 0.4);
+  legA.translate(-0.62, 0.23, 0);
+  const legB = new THREE.BoxGeometry(0.08, 0.46, 0.4);
+  legB.translate(0.62, 0.23, 0);
+  return mergeGeometries([seat, back, legA, legB]);
+})();
+
+const BENCH_SPOTS: Array<{ x: number; z: number; ry: number }> = [
+  { x: -12, z: -3.3, ry: Math.PI },
+  { x: 12, z: -3.3, ry: Math.PI },
+  { x: -12, z: 3.3, ry: 0 },
+  { x: 12, z: 3.3, ry: 0 },
+  { x: -3.3, z: -16, ry: Math.PI / 2 },
+  { x: 3.3, z: 16, ry: -Math.PI / 2 },
+  { x: -5, z: 57.5, ry: 0 },
+  { x: 5, z: 57.5, ry: 0 },
+];
+
+/** Park benches along the avenues and at the lookout. */
+export function Benches() {
+  return (
+    <Instances limit={BENCH_SPOTS.length} geometry={BENCH}>
+      <meshToonMaterial gradientMap={TOON} color="#8a5f3c" />
+      {BENCH_SPOTS.map((b, i) => (
+        <Instance key={i} position={[b.x, 0, b.z]} rotation={[0, b.ry, 0]} />
+      ))}
+    </Instances>
   );
 }
 
@@ -593,14 +706,14 @@ export function StreetLamps() {
     <group>
       <Instances limit={LAMPS.length}>
         <cylinderGeometry args={[0.07, 0.1, 3.1, 6]} />
-        <meshLambertMaterial color="#3c4a44" />
+        <meshToonMaterial gradientMap={TOON} color="#3c4a44" />
         {LAMPS.map((l, i) => (
           <Instance key={i} position={[l.x, 1.55, l.z]} />
         ))}
       </Instances>
       <Instances limit={LAMPS.length}>
         <sphereGeometry args={[0.17, 10, 10]} />
-        <meshLambertMaterial color="#eef2f6" />
+        <meshToonMaterial gradientMap={TOON} color="#eef2f6" />
         {LAMPS.map((l, i) => (
           <Instance key={i} position={[l.x, 3.18, l.z]} />
         ))}
