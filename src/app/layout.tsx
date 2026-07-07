@@ -69,12 +69,10 @@ export default function RootLayout({
         {children}
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: jsonLdString(personJsonLd()) }}
         />
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: jsonLdString(webSiteJsonLd()) }}
         />
         {beaconToken && (

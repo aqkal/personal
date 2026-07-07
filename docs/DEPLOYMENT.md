@@ -38,6 +38,8 @@ npm run preview:cf          # build + run the Workers build locally
 npm run deploy:cf           # build + deploy
 ```
 
+**Windows note:** the OpenNext bundler creates symlinks, which Windows blocks by default. Either enable Developer Mode (Settings -> System -> For developers) or run these commands from WSL. CI builds the Workers target on Linux either way, so compatibility is verified on every push even if you never build it locally.
+
 Set secrets once:
 
 ```bash

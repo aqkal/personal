@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate content
+        run: npm run validate:content
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build (Vercel target)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://example.com
+
+      - name: Build (Cloudflare Workers target)
+        run: npm run build:cf
+        env:
+          NEXT_PUBLIC_SITE_URL: https://example.com
+
+      - name: Dependency audit (report)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      # To auto-deploy to Cloudflare on pushes to main, add the repo secrets
+      # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, then uncomment:
+      # - name: Deploy to Cloudflare
+      #   if: github.ref == 'refs/heads/main'
+      #   run: npx wrangler deploy
+      #   env:
+      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
