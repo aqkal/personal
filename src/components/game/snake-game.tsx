@@ -189,7 +189,7 @@ export function SnakeGame() {
             <button
               type="button"
               onClick={start}
-              className="rounded border border-neon/60 bg-neon/15 px-4 py-2 font-pixel text-[9px] text-neon transition-colors hover:bg-neon/25"
+              className="btn-fx rounded border border-neon/60 bg-neon/15 px-4 py-2 font-pixel text-[9px] text-neon hover:bg-neon/25"
             >
               {phase === "over" ? "RETRY ▶" : "INSERT COIN ▶"}
             </button>

@@ -137,6 +137,50 @@ body {
   }
 }
 
+/* Basic button feedback: lift on hover, press on click. Plain CSS only. */
+.btn-fx {
+  transition:
+    transform 0.15s ease,
+    filter 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+.btn-fx:hover {
+  transform: translateY(-1px) scale(1.03);
+  filter: brightness(1.08);
+}
+.btn-fx:active {
+  transform: translateY(0) scale(0.97);
+  filter: brightness(0.98);
+}
+
+/* Card feedback: gentle lift + shadow. */
+.card-fx {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.card-fx:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.6);
+}
+.card-fx:active {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-fx:hover,
+  .btn-fx:active,
+  .card-fx:hover,
+  .card-fx:active {
+    transform: none;
+  }
+}
+
 /* Focus visibility - keyboard users must always see where they are */
 :focus-visible {
   outline: 2px solid var(--color-neon);

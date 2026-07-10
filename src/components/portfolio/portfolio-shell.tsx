@@ -326,7 +326,7 @@ export function PortfolioShell({
                 <Reveal key={p.id} delay={i * 0.07} className={i === 0 ? "sm:col-span-2" : ""}>
                   <Link
                       href={`/projects/${p.id}`}
-                      className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-[var(--accent)]"
+                      className="card-fx group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 hover:border-[var(--accent)]"
                       style={{ "--accent": accent } as React.CSSProperties}
                     >
                       <div className="flex items-baseline justify-between gap-3">
@@ -411,7 +411,7 @@ export function PortfolioShell({
             <Reveal>
               <Link
                 href={`/blog/${latestPost.slug}`}
-                className="group block rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-cyan/50"
+                className="card-fx group block rounded-2xl border border-line bg-surface p-6 hover:border-cyan/50"
               >
                 <p className="font-mono text-xs text-muted">
                   LATEST WRITING · {latestPost.dateLabel} · {latestPost.readingMinutes} min
@@ -446,7 +446,7 @@ export function PortfolioShell({
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
                   href="/contact"
-                  className="inline-block rounded-full bg-neon px-8 py-3 font-display font-semibold text-bg transition-opacity hover:opacity-90"
+                  className="btn-fx inline-block rounded-full bg-neon px-8 py-3 font-display font-semibold text-bg"
                 >
                   Start a conversation
                 </Link>

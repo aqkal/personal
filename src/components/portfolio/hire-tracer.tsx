@@ -45,7 +45,7 @@ export function HireTracer() {
             setRunId((r) => r + 1);
             setRunning(true);
           }}
-          className="rounded-full border border-neon/50 bg-neon/10 px-5 py-2 text-sm font-medium text-neon transition-colors hover:bg-neon/20 disabled:opacity-50"
+          className="btn-fx rounded-full border border-neon/50 bg-neon/10 px-5 py-2 text-sm font-medium text-neon hover:bg-neon/20 disabled:opacity-50"
         >
           {running ? "Tracing…" : "▶ Run the trace"}
         </button>
@@ -100,7 +100,7 @@ export function HireTracer() {
             <p className="text-sm text-neon">Trace complete. Start it any time.</p>
             <Link
               href="/contact"
-              className="ml-auto rounded-full bg-neon px-5 py-1.5 text-sm font-semibold text-bg transition-opacity hover:opacity-90"
+              className="btn-fx ml-auto rounded-full bg-neon px-5 py-1.5 text-sm font-semibold text-bg"
             >
               Send the first request
             </Link>

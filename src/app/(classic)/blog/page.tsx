@@ -32,7 +32,7 @@ export default function BlogIndexPage() {
             <li key={p.slug}>
               <Link
                 href={`/blog/${p.slug}`}
-                className="block rounded-lg border border-line bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-cyan/50"
+                className="card-fx block rounded-lg border border-line bg-surface p-5 hover:border-cyan/50"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="text-xl font-semibold text-ink">

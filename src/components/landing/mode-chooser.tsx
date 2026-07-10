@@ -195,7 +195,7 @@ export function ModeChooser({
           <button
               type="button"
               onClick={() => onChoose("game")}
-              className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-neon/60 focus-visible:border-neon sm:h-96"
+              className="card-fx group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left hover:border-neon/60 focus-visible:border-neon sm:h-96"
             >
               <HeroDiorama className="absolute inset-0" />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent p-5 pt-20">
@@ -222,7 +222,7 @@ export function ModeChooser({
           <button
               type="button"
               onClick={() => onChoose("portfolio")}
-              className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-cyan/60 focus-visible:border-cyan sm:h-96"
+              className="card-fx group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left hover:border-cyan/60 focus-visible:border-cyan sm:h-96"
             >
               <PortfolioScene />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent p-5 pt-20">

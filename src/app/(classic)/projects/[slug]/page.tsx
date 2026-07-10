@@ -148,7 +148,7 @@ export default async function ProjectCasePage({
       <nav className="mt-14 grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
         <Link
           href={`/projects/${prev.id}`}
-          className="group rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-neon/40"
+          className="card-fx group rounded-2xl border border-line bg-surface p-4 hover:border-neon/40"
         >
           <p className="text-xs text-muted">← Previous</p>
           <p className="mt-1 font-display font-semibold group-hover:text-neon">
@@ -157,7 +157,7 @@ export default async function ProjectCasePage({
         </Link>
         <Link
           href={`/projects/${next.id}`}
-          className="group rounded-2xl border border-line bg-surface p-4 text-right transition-colors hover:border-neon/40"
+          className="card-fx group rounded-2xl border border-line bg-surface p-4 text-right hover:border-neon/40"
         >
           <p className="text-xs text-muted">Next →</p>
           <p className="mt-1 font-display font-semibold group-hover:text-neon">

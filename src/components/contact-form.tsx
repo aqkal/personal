@@ -174,7 +174,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded border border-neon/50 bg-neon/10 px-6 py-2.5 text-sm font-medium text-neon transition-colors hover:bg-neon/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-fx rounded border border-neon/50 bg-neon/10 px-6 py-2.5 text-sm font-medium text-neon hover:bg-neon/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "sending" ? "Sending…" : "Send message ▶"}
       </button>

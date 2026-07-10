@@ -41,7 +41,7 @@ export default function ProjectsPage() {
           <Reveal key={p.id} delay={i * 0.05}>
             <Link
                 href={`/projects/${p.id}`}
-                className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-[var(--accent)]"
+                className="card-fx group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 hover:border-[var(--accent)]"
                 style={{ "--accent": accent } as React.CSSProperties}
               >
                 <header>

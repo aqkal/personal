@@ -14,13 +14,13 @@ export default function NotFound() {
       <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
         <Link
           href="/"
-          className="rounded border border-neon/50 bg-neon/10 px-5 py-2 font-medium text-neon transition-colors hover:bg-neon/20"
+          className="btn-fx rounded border border-neon/50 bg-neon/10 px-5 py-2 font-medium text-neon hover:bg-neon/20"
         >
           ▶ Respawn at start
         </Link>
         <Link
           href="/about"
-          className="rounded border border-line px-5 py-2 text-muted transition-colors hover:border-cyan/50 hover:text-cyan"
+          className="btn-fx rounded border border-line px-5 py-2 text-muted hover:border-cyan/50 hover:text-cyan"
         >
           Classic site
         </Link>
