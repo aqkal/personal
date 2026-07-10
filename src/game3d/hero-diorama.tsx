@@ -63,7 +63,7 @@ export function HeroDiorama({ className }: { className?: string }) {
   }, [mounted, softGL]);
 
   return (
-    <div ref={wrapRef} className={`relative overflow-hidden ${className ?? ""}`}>
+    <div ref={wrapRef} className={`overflow-hidden ${className ?? "relative h-full w-full"}`}>
       {/* shimmer placeholder until the canvas is ready */}
       <div
         aria-hidden

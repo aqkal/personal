@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion as m, useReducedMotion } from "motion/react";
-import { profile } from "@content";
+import { experience, profile } from "@content";
 import { Counter } from "@/components/fx/counter";
 import { Ticker } from "@/components/fx/ticker";
 
@@ -31,44 +31,83 @@ const entrance = {
   }),
 };
 
+/** A miniature mock of the one-pager so the door reads as a real preview. */
 function PortfolioScene() {
+  const initials = profile.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   return (
-    <div aria-hidden className="absolute inset-0 overflow-hidden bg-surface">
-      {/* split identity backdrop */}
-      <div className="absolute inset-y-0 left-0 w-1/2 bg-[#0b101d]" />
-      <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-br from-[#10203a] to-[#123528]" />
-      <div className="absolute inset-x-0 top-6 flex flex-col items-center gap-3 px-4">
-        <span className="flex size-14 items-center justify-center rounded-full border-2 border-neon/60 bg-bg font-display text-lg font-bold text-neon">
-          {profile.name
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase()}
-        </span>
-        <p className="text-center font-display text-sm font-semibold tracking-wide text-ink">
-          SOFTWARE ENGINEER <span className="text-neon">×</span> WORLD BUILDER
-        </p>
-        <p className="flex items-center gap-2 rounded-full border border-neon/40 bg-neon/10 px-3 py-1 text-[11px] text-neon">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-neon opacity-60" />
-            <span className="relative inline-flex size-2 rounded-full bg-neon" />
+    <div
+      aria-hidden
+      className="absolute inset-0 overflow-hidden bg-gradient-to-b from-[#16213a] via-[#131c30] to-[#0d1424]"
+    >
+      <div className="absolute inset-x-4 top-4 rounded-xl border border-line bg-bg/80 p-4 shadow-lg">
+        {/* mini hero */}
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-neon/60 bg-surface font-display text-sm font-bold text-neon">
+            {initials}
           </span>
-          open to work
-        </p>
-        <div className="mt-1 flex gap-5 font-display text-xl font-bold text-ink/90">
-          <span>
-            <Counter to={5} />
-            <span className="ml-1 text-[10px] font-normal text-muted">projects</span>
+          <div className="min-w-0">
+            <p className="truncate font-display text-sm font-bold text-ink">
+              {profile.name}
+            </p>
+            <p className="truncate text-[11px] text-muted">
+              Software engineer <span className="text-neon">×</span> world
+              builder
+            </p>
+          </div>
+          <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap rounded-full border border-neon/40 bg-neon/10 px-2 py-0.5 text-[10px] text-neon">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-neon opacity-60" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-neon" />
+            </span>
+            open to work
           </span>
-          <span>
-            <Counter to={2} />
-            <span className="ml-1 text-[10px] font-normal text-muted">internships</span>
-          </span>
-          <span>
-            <Counter to={25} suffix="%" />
-            <span className="ml-1 text-[10px] font-normal text-muted">scholarship</span>
-          </span>
+        </div>
+        {/* mini stats */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { v: <Counter to={5} />, l: "projects" },
+            { v: <Counter to={2} />, l: "internships" },
+            { v: <Counter to={25} suffix="%" />, l: "scholarship" },
+          ].map((s) => (
+            <div
+              key={s.l}
+              className="rounded-lg border border-line bg-surface px-2 py-1.5 text-center"
+            >
+              <p className="font-display text-base font-bold text-neon">{s.v}</p>
+              <p className="text-[9px] text-muted">{s.l}</p>
+            </div>
+          ))}
+        </div>
+        {/* mini experience rows (hidden on short mobile panels) */}
+        <div className="mt-3 hidden space-y-2 sm:block">
+          {experience.map((job) => (
+            <div
+              key={job.id}
+              className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5"
+            >
+              <span
+                className="size-1.5 shrink-0 rounded-full"
+                style={{ background: job.end === null ? "#4ef08a" : "#53d8ff" }}
+              />
+              <p className="truncate text-[11px] text-ink/90">
+                {job.role} · {job.company}
+              </p>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            {["#4ef08a", "#53d8ff", "#ff6bd6"].map((c) => (
+              <div
+                key={c}
+                className="h-6 flex-1 rounded-lg border border-line bg-surface"
+                style={{ borderBottomColor: c, borderBottomWidth: 2 }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -159,7 +198,7 @@ export function ModeChooser({
               className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-neon/60 focus-visible:border-neon sm:h-96"
             >
               <HeroDiorama className="absolute inset-0" />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-5 pt-16">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent p-5 pt-20">
                 <p className="font-display text-2xl font-bold text-white">
                   Explore the campus
                 </p>
@@ -186,7 +225,7 @@ export function ModeChooser({
               className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-cyan/60 focus-visible:border-cyan sm:h-96"
             >
               <PortfolioScene />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-5 pt-16">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent p-5 pt-20">
                 <p className="font-display text-2xl font-bold text-white">
                   Read the story
                 </p>
