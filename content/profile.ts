@@ -18,6 +18,14 @@ export const profile: Profile = {
     linkedin: "https://www.linkedin.com/in/your-profile",
   },
   availability: "Open to internships and graduate software engineering roles.",
+  funFacts: [
+    "Maintains a 25% scholarship, every semester",
+    "Shipped code with a 20-developer team before graduating",
+    "Taught a computer to spot barnacles on ship hulls",
+    "Built this site three times: pixels, night, then daylight",
+    "Based in Brisbane, jacaranda season enjoyer",
+    "Speaks TypeScript, Java, Python, and Haskell (yes, Haskell)",
+  ],
   softSkills: [
     "Teamwork & Collaboration",
     "Communication",

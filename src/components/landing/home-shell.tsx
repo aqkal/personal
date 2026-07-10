@@ -37,7 +37,7 @@ const StatusShell = dynamic(
   },
 );
 
-type Mode = "choose" | "game" | "status";
+type Mode = "choose" | "game" | "portfolio";
 
 const STORAGE_KEY = "interface";
 const SERVER_SENTINEL = "__server__";
@@ -70,11 +70,11 @@ export function HomeShell() {
       ? "boot"
       : stored === "game"
         ? "game"
-        : stored === "status"
-          ? "status"
+        : stored === "portfolio"
+          ? "portfolio"
           : "choose");
 
-  const choose = useCallback((next: "game" | "status") => {
+  const choose = useCallback((next: "game" | "portfolio") => {
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -98,7 +98,7 @@ export function HomeShell() {
   if (mode === "game") {
     return <GameShell onExit={backToChooser} />;
   }
-  if (mode === "status") {
+  if (mode === "portfolio") {
     return (
       <StatusShell onExit={backToChooser} onPlayGame={() => choose("game")} />
     );

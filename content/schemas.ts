@@ -121,6 +121,8 @@ export const profileSchema = z.object({
   /** One-liner describing current availability, shown on /contact. */
   availability: z.string().max(160).optional(),
   softSkills: z.array(z.string().min(1).max(60)).max(12),
+  /** Short personality facts for tickers and the about page. */
+  funFacts: z.array(z.string().min(1).max(90)).max(8).default([]),
 });
 export type Profile = z.infer<typeof profileSchema>;
 

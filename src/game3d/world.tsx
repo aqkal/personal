@@ -19,6 +19,7 @@ import {
   ZoneLabels,
 } from "./buildings";
 import { CameraControls } from "./camera-controls";
+import { hasSoftwareGL } from "./detect";
 import { Interactions } from "./interactions";
 import {
   Birds,
@@ -47,27 +48,6 @@ const CONTROL_MAP: Array<{ name: ControlName; keys: string[] }> = [
   { name: "sprint", keys: ["ShiftLeft", "ShiftRight"] },
   { name: "interact", keys: ["KeyE", "Enter", "Space"] },
 ];
-
-/**
- * Software rasterizers (SwiftShader, llvmpipe) cannot hold 60fps on a scene
- * like this; detect them up front and start at minimum quality instead of
- * letting the page crawl.
- */
-function hasSoftwareGL(): boolean {
-  try {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-    if (!gl) return true;
-    const info = gl.getExtension("WEBGL_debug_renderer_info");
-    const renderer = info
-      ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))
-      : "";
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
-    return /swiftshader|llvmpipe|software|basic render/i.test(renderer);
-  } catch {
-    return false;
-  }
-}
 
 /**
  * A bright Brisbane day, built for smoothness: no shadow maps, no
