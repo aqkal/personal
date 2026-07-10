@@ -2,11 +2,12 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useState, useSyncExternalStore } from "react";
+import type { LatestPostMeta } from "@/components/portfolio/portfolio-shell";
 import { ModeChooser } from "./mode-chooser";
 
 /**
  * Both interfaces stay behind dynamic imports; the landing page and classic
- * site ship zero game or terminal code (see Performance Budget in
+ * site ship zero game or portfolio-shell code (see Performance Budget in
  * docs/ARCHITECTURE.md).
  */
 const GameShell = dynamic(
@@ -23,14 +24,17 @@ const GameShell = dynamic(
   },
 );
 
-const StatusShell = dynamic(
-  () => import("@/components/status/status-shell").then((mod) => mod.StatusShell),
+const PortfolioShell = dynamic(
+  () =>
+    import("@/components/portfolio/portfolio-shell").then(
+      (mod) => mod.PortfolioShell,
+    ),
   {
     ssr: false,
     loading: () => (
       <div className="flex min-h-dvh items-center justify-center bg-bg">
         <p className="font-mono text-sm text-neon">
-          checking system status<span className="animate-blink">_</span>
+          opening portfolio<span className="animate-blink">_</span>
         </p>
       </div>
     ),
@@ -54,7 +58,11 @@ function readStoredInterface(): string | null {
   }
 }
 
-export function HomeShell() {
+export function HomeShell({
+  latestPost,
+}: {
+  latestPost: LatestPostMeta | null;
+}) {
   // SSR renders a blank boot frame; the client snapshot kicks in on hydration
   // (returning visitors go straight back into their chosen interface).
   const stored = useSyncExternalStore(
@@ -100,7 +108,11 @@ export function HomeShell() {
   }
   if (mode === "portfolio") {
     return (
-      <StatusShell onExit={backToChooser} onPlayGame={() => choose("game")} />
+      <PortfolioShell
+        onExit={backToChooser}
+        onPlayGame={() => choose("game")}
+        latestPost={latestPost}
+      />
     );
   }
   return <ModeChooser onChoose={choose} />;
