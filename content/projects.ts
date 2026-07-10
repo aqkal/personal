@@ -23,6 +23,14 @@ export const projects: Project[] = [
     ],
     tech: ["Python", "OpenCV", "Machine Learning", "TypeScript", "HTML", "CSS"],
     featured: true,
+    caseStudy: {
+      problem:
+        "Marine fouling on ship hulls increases drag and fuel consumption, and inspecting for it means specialists manually reviewing hours of murky underwater ROV footage. Slow, expensive, and easy to miss things.",
+      approach:
+        "We built a web platform where inspectors upload ROV footage and a Python + OpenCV pipeline takes over: frames are extracted, visual features isolated, and machine learning models classify fouling patterns. I worked across the computer vision pipeline and the web frontend and backend within a multidisciplinary team.",
+      outcome:
+        "An automated inspection workflow that turns raw footage into an assessment, validated and tuned for accuracy and usability. It also taught me how to ship ML work as a usable product rather than a notebook.",
+    },
     world: {
       zone: "arcade",
       sprite: "cabinet",
@@ -48,6 +56,14 @@ export const projects: Project[] = [
     ],
     tech: ["Java", "Docker", "Terraform", "REST APIs"],
     featured: true,
+    caseStudy: {
+      problem:
+        "Seven developers building one system in parallel is where architectures go to die: shared state, tangled deploys, and a test suite nobody trusts.",
+      approach:
+        "We split the system into independently deployable Java services behind RESTful APIs, containerised everything with Docker and Compose, and defined the cloud infrastructure as Terraform code so every environment was reproducible from a fresh checkout. Mutation testing kept the test suite honest about what it actually caught.",
+      outcome:
+        "Repeatable one-command deployments, services that shipped independently without stepping on each other, and a measurably stronger test suite. The clearest lesson I have had in why architecture decisions are team decisions.",
+    },
     world: {
       zone: "arcade",
       sprite: "cabinet",
@@ -73,6 +89,14 @@ export const projects: Project[] = [
     ],
     tech: ["Next.js", "TypeScript", "Supabase", "Vercel", "GitHub Actions"],
     featured: true,
+    caseStudy: {
+      problem:
+        "Finding a rental means juggling listings, filters, and contact threads across half the internet. I wanted one clean platform for searching and listing apartments, and I wanted to own every layer of it myself.",
+      approach:
+        "Next.js and TypeScript with a component-based architecture on the front, Supabase for authentication, database, and APIs on the back. Responsive listing, filtering, and detail interfaces, wired into a GitHub Actions CI/CD pipeline that deploys to Vercel on every push.",
+      outcome:
+        "A production full-stack platform delivered end to end by one person, and the project that made this very portfolio's stack feel like home.",
+    },
     world: {
       zone: "arcade",
       sprite: "cabinet",
@@ -98,6 +122,14 @@ export const projects: Project[] = [
     ],
     tech: ["Java", "Git", "JUnit", "Continuous Integration"],
     featured: false,
+    caseStudy: {
+      problem:
+        "More than twenty developers extending one shared Java game engine at the same time. Without discipline, that is merge-conflict soup and broken builds every morning.",
+      approach:
+        "Established design patterns for new mechanics and UI systems, test-driven development with JUnit and coverage analysis, and a Git workflow with continuous integration so work merged safely across sub-teams. Code review was the culture, not a checkbox.",
+      outcome:
+        "Features landed in the common codebase without regressions, and I got the closest thing university offers to real industry engineering: shipping inside a large, live team.",
+    },
     world: {
       zone: "arcade",
       sprite: "cabinet",
@@ -121,6 +153,14 @@ export const projects: Project[] = [
     ],
     tech: ["FHIR", "REST APIs", "JavaScript"],
     featured: false,
+    caseStudy: {
+      problem:
+        "Healthcare data lives in silos, and patients pay for it: records that cannot follow them between systems mean repeated tests and missed context.",
+      approach:
+        "We built a digital health platform on the FHIR standard, the shared language of modern clinical systems: web interfaces and backend integrations that retrieve and display electronic health records through standards-compliant REST APIs, designed as a team against real clinical-system patterns.",
+      outcome:
+        "A working interoperable platform and a practical grounding in the standard that runs modern health tech, from resources and profiles to the realities of clinical data.",
+    },
     world: {
       zone: "arcade",
       sprite: "cabinet",

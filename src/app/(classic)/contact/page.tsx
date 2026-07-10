@@ -10,10 +10,16 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="max-w-2xl">
-      <p className="font-pixel text-[10px] text-neon">POST OFFICE</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">Contact</h1>
+      <p className="font-mono text-xs tracking-[0.2em] text-neon">
+        POST OFFICE
+      </p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
+        Say hello<span className="text-neon">.</span>
+      </h1>
       {profile.availability && (
-        <p className="mt-3 text-muted">{profile.availability}</p>
+        <p className="mt-3 text-muted">
+          {profile.availability} Messages get answered, usually the same day.
+        </p>
       )}
 
       <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">

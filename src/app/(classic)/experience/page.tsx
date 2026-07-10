@@ -13,8 +13,12 @@ export const metadata: Metadata = {
 export default function ExperiencePage() {
   return (
     <div className="max-w-3xl">
-      <p className="font-pixel text-[10px] text-neon">CAREER DISTRICT</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">Experience</h1>
+      <p className="font-mono text-xs tracking-[0.2em] text-neon">
+        CAREER DISTRICT
+      </p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
+        Experience
+      </h1>
       <p className="mt-3 text-muted">
         Every entry below is also a building you can walk into in the{" "}
         <Link href="/" className="text-cyan hover:underline">

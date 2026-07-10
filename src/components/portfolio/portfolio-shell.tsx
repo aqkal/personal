@@ -16,6 +16,7 @@ import { Reveal } from "@/components/fx/reveal";
 import { SpotlightArea } from "@/components/fx/spotlight";
 import { Ticker } from "@/components/fx/ticker";
 import { TiltCard } from "@/components/fx/tilt-card";
+import { accentFor } from "@/lib/accents";
 import { formatRange } from "@/lib/dates";
 import { CharacterPortrait } from "./character-portrait";
 import { HireTracer } from "./hire-tracer";
@@ -39,8 +40,6 @@ const SECTIONS = [
   { id: "projects", label: "Projects" },
   { id: "contact", label: "Contact" },
 ] as const;
-
-const ACCENTS = ["#4ef08a", "#53d8ff", "#ff6bd6", "#ffc857", "#b18cff"];
 
 function useScrollSpy(ids: readonly string[]): string {
   const [active, setActive] = useState(ids[0]);
@@ -324,7 +323,7 @@ export function PortfolioShell({
           </Reveal>
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {featured.map((p, i) => {
-              const accent = ACCENTS[i % ACCENTS.length];
+              const accent = accentFor(projects.indexOf(p));
               return (
                 <Reveal key={p.id} delay={i * 0.07} className={i === 0 ? "sm:col-span-2" : ""}>
                   <TiltCard className="h-full rounded-2xl">

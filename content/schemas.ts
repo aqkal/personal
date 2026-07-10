@@ -76,6 +76,14 @@ export const projectSchema = z.object({
     })
     .optional(),
   featured: z.boolean().default(false),
+  /** Optional story for the /projects/[slug] case page. */
+  caseStudy: z
+    .object({
+      problem: z.string().min(1).max(600),
+      approach: z.string().min(1).max(600),
+      outcome: z.string().min(1).max(600),
+    })
+    .optional(),
   world: worldMetaSchema,
 });
 export type Project = z.infer<typeof projectSchema>;

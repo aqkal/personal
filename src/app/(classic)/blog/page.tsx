@@ -14,8 +14,12 @@ export default function BlogIndexPage() {
 
   return (
     <div className="max-w-3xl">
-      <p className="font-pixel text-[10px] text-neon">BLOG CAFÉ</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">Blog</h1>
+      <p className="font-mono text-xs tracking-[0.2em] text-neon">
+        BLOG CAFÉ
+      </p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
+        Blog
+      </h1>
       <p className="mt-3 text-muted">
         Build logs, write-ups, and lessons learned. Freshly brewed.
       </p>

@@ -14,8 +14,10 @@ export default function AboutPage() {
 
   return (
     <article className="max-w-3xl">
-      <p className="font-pixel text-[10px] text-neon">PLAYER PROFILE</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">
+      <p className="font-mono text-xs tracking-[0.2em] text-neon">
+        PLAYER PROFILE
+      </p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
         {profile.name}
       </h1>
       <p className="mt-3 text-lg text-muted">{profile.tagline}</p>
@@ -52,7 +54,7 @@ export default function AboutPage() {
           {formatRange(uni.start, uni.end)}), where I&apos;ve been awarded a
           25% academic scholarship every semester. I care about software that
           is engineered properly <em>and</em> feels great to use - which is
-          why this site is a walkable pixel world instead of another static
+          why this site is a walkable 3D campus instead of another static
           page.
         </p>
         {current && (
@@ -74,7 +76,25 @@ export default function AboutPage() {
       </div>
 
       <section className="mt-12">
-        <h2 className="font-pixel text-xs text-amber">SOFT SKILLS</h2>
+        <h2 className="font-mono text-xs tracking-[0.2em] text-amber">
+          FUN FACTS
+        </h2>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {profile.funFacts.map((fact) => (
+            <li
+              key={fact}
+              className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted transition-colors hover:border-neon/40 hover:text-ink"
+            >
+              {fact}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-mono text-xs tracking-[0.2em] text-amber">
+          SOFT SKILLS
+        </h2>
         <ul className="mt-4 flex flex-wrap gap-2">
           {profile.softSkills.map((s) => (
             <li
