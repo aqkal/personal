@@ -36,7 +36,7 @@ Run lint + typecheck + build before declaring work done.
 - `src/game/bus.ts` - typed mitt bridge between world and React overlays
 - `src/components/game/` - HUD, dialogs, Snake, touch controls
 - `src/components/portfolio/` - the Spotlight One-Pager (interface 2)
-- `src/components/fx/` - micro-interaction primitives (Magnetic, TiltCard, Reveal, SpotlightArea, Ticker, Counter)
+- `src/components/fx/` - micro-interaction primitives (Reveal, SpotlightArea, Ticker, Counter). No cursor-follow effects on buttons or cards (owner preference); hover feedback is plain CSS.
 
 ## Known open items
 

@@ -5,9 +5,7 @@ import Link from "next/link";
 import { motion as m, useReducedMotion } from "motion/react";
 import { profile } from "@content";
 import { Counter } from "@/components/fx/counter";
-import { Magnetic } from "@/components/fx/magnetic";
 import { Ticker } from "@/components/fx/ticker";
-import { TiltCard } from "@/components/fx/tilt-card";
 
 /**
  * The front door: editorial identity block over two live panels, the 3D
@@ -155,8 +153,7 @@ export function ModeChooser({
           initial={reduced ? false : "hidden"}
           animate="show"
         >
-          <TiltCard className="rounded-2xl">
-            <button
+          <button
               type="button"
               onClick={() => onChoose("game")}
               className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-neon/60 focus-visible:border-neon sm:h-96"
@@ -170,14 +167,11 @@ export function ModeChooser({
                   A 3D world built from my resume. Walk it, poke things, find
                   the arcade.
                 </p>
-                <Magnetic className="mt-4 inline-block">
-                  <span className="inline-block rounded-full bg-neon px-5 py-2 font-display text-sm font-semibold text-bg transition-transform group-hover:scale-105">
+                <span className="mt-4 inline-block rounded-full bg-neon px-5 py-2 font-display text-sm font-semibold text-bg transition-transform group-hover:scale-105">
                     ▶ Press start
                   </span>
-                </Magnetic>
               </div>
             </button>
-          </TiltCard>
         </m.div>
 
         <m.div
@@ -186,8 +180,7 @@ export function ModeChooser({
           initial={reduced ? false : "hidden"}
           animate="show"
         >
-          <TiltCard className="rounded-2xl">
-            <button
+          <button
               type="button"
               onClick={() => onChoose("portfolio")}
               className="group relative block h-72 w-full overflow-hidden rounded-2xl border border-line text-left transition-colors hover:border-cyan/60 focus-visible:border-cyan sm:h-96"
@@ -200,14 +193,11 @@ export function ModeChooser({
                 <p className="mt-1 text-sm text-white/80">
                   One beautiful page: experience, projects, and how to reach me.
                 </p>
-                <Magnetic className="mt-4 inline-block">
-                  <span className="inline-block rounded-full bg-cyan px-5 py-2 font-display text-sm font-semibold text-bg transition-transform group-hover:scale-105">
+                <span className="mt-4 inline-block rounded-full bg-cyan px-5 py-2 font-display text-sm font-semibold text-bg transition-transform group-hover:scale-105">
                     Open portfolio
                   </span>
-                </Magnetic>
               </div>
             </button>
-          </TiltCard>
         </m.div>
       </div>
 

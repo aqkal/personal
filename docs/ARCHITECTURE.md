@@ -58,10 +58,11 @@ src/app/page.tsx -> HomeShell (client)
 
 ### 5. fx primitives (`src/components/fx/`)
 
-`Magnetic`, `TiltCard`, `Reveal`, `SpotlightArea`, `Ticker`, `Counter`: the
-micro-interaction kit used by the gate, the one-pager, and classic pages.
-Every primitive degrades to static markup on coarse pointers and under
-`prefers-reduced-motion`.
+`Reveal`, `SpotlightArea`, `Ticker`, `Counter`: the micro-interaction kit
+used by the gate, the one-pager, and classic pages. Every primitive degrades
+to static markup on coarse pointers and under `prefers-reduced-motion`.
+(Cursor-follow effects like magnetic buttons and tilt cards were tried and
+removed at the owner's request: hover states are plain CSS only.)
 
 ### 6. Hero diorama (`src/game3d/hero-diorama.tsx`)
 

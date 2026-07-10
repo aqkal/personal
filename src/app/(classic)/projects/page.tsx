@@ -3,7 +3,6 @@ import Link from "next/link";
 import { projects } from "@content";
 import { TechBadges } from "@/components/badges";
 import { Reveal } from "@/components/fx/reveal";
-import { TiltCard } from "@/components/fx/tilt-card";
 import { accentFor } from "@/lib/accents";
 
 export const metadata: Metadata = {
@@ -40,8 +39,7 @@ export default function ProjectsPage() {
       <div className="mt-10 grid gap-5 sm:grid-cols-2">
         {ordered.map(({ p, accent }, i) => (
           <Reveal key={p.id} delay={i * 0.05}>
-            <TiltCard className="h-full rounded-2xl">
-              <Link
+            <Link
                 href={`/projects/${p.id}`}
                 className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-[var(--accent)]"
                 style={{ "--accent": accent } as React.CSSProperties}
@@ -68,7 +66,6 @@ export default function ProjectsPage() {
                   </p>
                 </div>
               </Link>
-            </TiltCard>
           </Reveal>
         ))}
       </div>

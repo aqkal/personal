@@ -11,11 +11,9 @@ import {
 } from "@content";
 import { TechBadges } from "@/components/badges";
 import { Counter } from "@/components/fx/counter";
-import { Magnetic } from "@/components/fx/magnetic";
 import { Reveal } from "@/components/fx/reveal";
 import { SpotlightArea } from "@/components/fx/spotlight";
 import { Ticker } from "@/components/fx/ticker";
-import { TiltCard } from "@/components/fx/tilt-card";
 import { accentFor } from "@/lib/accents";
 import { formatRange } from "@/lib/dates";
 import { CharacterPortrait } from "./character-portrait";
@@ -326,8 +324,7 @@ export function PortfolioShell({
               const accent = accentFor(projects.indexOf(p));
               return (
                 <Reveal key={p.id} delay={i * 0.07} className={i === 0 ? "sm:col-span-2" : ""}>
-                  <TiltCard className="h-full rounded-2xl">
-                    <Link
+                  <Link
                       href={`/projects/${p.id}`}
                       className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-[var(--accent)]"
                       style={{ "--accent": accent } as React.CSSProperties}
@@ -353,7 +350,6 @@ export function PortfolioShell({
                         </p>
                       </div>
                     </Link>
-                  </TiltCard>
                 </Reveal>
               );
             })}
@@ -448,14 +444,12 @@ export function PortfolioShell({
               day.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <Magnetic>
-                <Link
+              <Link
                   href="/contact"
                   className="inline-block rounded-full bg-neon px-8 py-3 font-display font-semibold text-bg transition-opacity hover:opacity-90"
                 >
                   Start a conversation
                 </Link>
-              </Magnetic>
               <a
                 href={`mailto:${profile.email}`}
                 className="text-sm text-muted transition-colors hover:text-ink"
