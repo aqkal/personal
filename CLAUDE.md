@@ -4,7 +4,7 @@ Guidance for AI coding sessions in this repo.
 
 ## What this is
 
-A dual-interface personal portfolio: a 3D explorable Brisbane campus (three.js / React Three Fiber) and a UQ-OS terminal, plus a classic HTML site. All three render the same typed content model. Read docs/CONTEXT.md and docs/ARCHITECTURE.md before structural changes.
+A dual-interface personal portfolio: a 3D explorable Brisbane campus (three.js / React Three Fiber) and a Spotlight One-Pager portfolio, plus a classic HTML site with project case studies. Everything renders the same typed content model. Read docs/CONTEXT.md and docs/ARCHITECTURE.md before structural changes.
 
 ## Hard rules
 
@@ -35,7 +35,8 @@ Run lint + typecheck + build before declaring work done.
 - `src/game3d/` - the 3D world; `layout.ts` is pure data (positions, colliders, content mapping); `state.ts` is the dependency-free frame state (player, camera orbit, pause)
 - `src/game/bus.ts` - typed mitt bridge between world and React overlays
 - `src/components/game/` - HUD, dialogs, Snake, touch controls
-- `src/terminal/` - virtual FS + command registry; UI in `src/components/terminal/`
+- `src/components/portfolio/` - the Spotlight One-Pager (interface 2)
+- `src/components/fx/` - micro-interaction primitives (Magnetic, TiltCard, Reveal, SpotlightArea, Ticker, Counter)
 
 ## Known open items
 

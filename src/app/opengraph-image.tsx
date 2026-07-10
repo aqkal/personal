@@ -27,31 +27,41 @@ export default function OgImage() {
             display: "flex",
             alignItems: "center",
             gap: 18,
-            color: "#4ef08a",
-            fontSize: 30,
-            letterSpacing: 6,
+            color: "#8b9bb8",
+            fontSize: 26,
+            letterSpacing: 10,
           }}
         >
-          &gt;&gt; CHOOSE YOUR INTERFACE &lt;&lt;
+          PORTFOLIO · BRISBANE, AUSTRALIA
         </div>
-        <div style={{ marginTop: 28, fontSize: 76, fontWeight: 700 }}>
+        <div style={{ marginTop: 24, fontSize: 84, fontWeight: 700 }}>
           {profile.name}
-        </div>
-        <div style={{ marginTop: 18, color: "#8b9bb8", fontSize: 34 }}>
-          {profile.tagline}
         </div>
         <div
           style={{
-            marginTop: 46,
+            marginTop: 20,
+            display: "flex",
+            gap: 16,
+            fontSize: 36,
+            color: "#dbe4f5",
+          }}
+        >
+          <span>software engineer</span>
+          <span style={{ color: "#4ef08a" }}>×</span>
+          <span>world builder</span>
+        </div>
+        <div
+          style={{
+            marginTop: 44,
             display: "flex",
             gap: 26,
-            fontSize: 26,
+            fontSize: 25,
             color: "#53d8ff",
           }}
         >
           <span>walkable 3D Brisbane campus</span>
           <span>+</span>
-          <span>live status dashboard</span>
+          <span>spotlight portfolio</span>
         </div>
       </div>
     ),

@@ -5,7 +5,7 @@
 A personal portfolio website for a University of Queensland Software Engineering student, built as an interactive experience rather than a static page. The site presents two interfaces on landing:
 
 1. **Game world**: a stylized 3D scene of a sunny Brisbane day, inspired by UQ's St Lucia campus. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
-2. **Status Board**: the owner rendered as a live system dashboard: an "All systems operational" hero, count-up metrics, clickable component cards (Education, Experience, Projects, Skills) with plain-English summaries, an animated "how hiring me works" request trace, and a tongue-in-cheek incident history. Designed so non-technical visitors need zero explanation; the CS flavor is garnish.
+2. **Spotlight One-Pager**: a single scrolling portfolio page assembled from the proven patterns of the best engineer portfolios (Brittany Chiang's spotlight cursor and experience-row anatomy, Adham Dannaway's split-identity hero, Tamal Sen's funnel order, Jhey Tompkins' living footer): split hero with the 3D character as a frozen-wave portrait, proof ticker, about + fun facts, experience rows, featured project tilt cards linking to case studies, count-up stats, the "how hiring me works" trace, latest blog post, a say-hello bookend, and a footer with a live Brisbane clock. Zero learning curve; the CS flavor is garnish.
 
 There is always a third path: the **classic site** (`/about`, `/experience`, `/projects`, `/blog`, `/contact`, `/resume`). This is what crawlers index, what reduced-motion users get offered, and what recruiters in a hurry click.
 

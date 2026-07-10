@@ -63,6 +63,26 @@ Append to [content/projects.ts](../content/projects.ts). Same shape idea; `world
 },
 ```
 
+## Add a case study to a project
+
+Add the optional `caseStudy` object to any project in [content/projects.ts](../content/projects.ts); it powers the `/projects/<id>` page:
+
+```ts
+caseStudy: {
+  problem: "What hurt, in one or two sentences.",
+  approach: "What you built and how, in plain language.",
+  outcome: "What shipped and what it taught you.",
+},
+```
+
+Without it, the case page falls back to the project description.
+
+## Add or edit fun facts
+
+`funFacts` in [content/profile.ts](../content/profile.ts) feeds the landing
+ticker, the one-pager about section, and /about. Keep each under 90
+characters and true.
+
 ## Add a skill category
 
 Append to [content/skills.ts](../content/skills.ts) with `zone: "garden"`. It becomes a floating crystal (5 pedestal slots in `layout.ts` `CRYSTAL_SLOTS`).

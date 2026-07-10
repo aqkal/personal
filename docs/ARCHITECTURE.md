@@ -8,7 +8,8 @@ content/*.ts  (Zod-validated single source of truth)
    |--> classic HTML pages   src/app/(classic)/*      SEO, recruiters, a11y
    |--> 3D world spawner     src/game3d/layout.ts     buildings from content
    |--> resume page          src/app/(classic)/resume print-friendly
-   |--> terminal vFS         src/terminal/fs.ts       files from content
+   |--> spotlight one-pager  src/components/portfolio print-quality scroll page
+   |--> case studies         (classic)/projects/[slug] problem/approach/outcome
    |
 src/app/page.tsx -> HomeShell (client)
    boot -> mode chooser -> GameShell (dynamic import) -> World3D (three.js)
@@ -43,19 +44,34 @@ src/app/page.tsx -> HomeShell (client)
 - `state.ts`: mutable frame state (`playerPos`, `playerHeading`, `cameraOrbit`, `runtime.paused`, `joystick`, `activeTarget`). Dependency-free so HUD components can import it without pulling three.js.
 - Map UI (`src/components/game/world-map.tsx`): a live corner minimap and an M-key full map overlay with legend, both drawn on 2D canvas straight from `layout.ts` data.
 
-### 4. Terminal (`src/terminal/` + `src/components/terminal/`)
+### 4. Spotlight One-Pager (`src/components/portfolio/`)
 
-- `fs.ts`: a virtual filesystem generated from `@content` (experience entries
-  become `~/experience/<id>.md`, and so on). Adding content adds files.
-- `commands.ts`: pure command registry, (input, cwd, history) -> printable
-  lines + optional action (clear/exit/play/snake/vim/theme/navigate). No DOM,
-  unit-testable.
-- `terminal-shell.tsx`: custom lightweight terminal UI (no xterm): boot
-  sequence, tab completion, arrow history, three phosphor themes, clickable
-  suggestion chips, aria-live scrollback, embedded Snake, vim easter egg.
-  Dynamically imported like the game; ships nothing to other pages.
+- `portfolio-shell.tsx`: interface 2. Split-identity hero, proof ticker,
+  about + fun facts, experience rows, featured project tilt cards, count-up
+  stats, hire trace, latest-post card (meta passed from the server page
+  through `HomeShell`), say-hello CTA, living footer (Brisbane clock),
+  scroll-spy anchor nav. Dynamically imported; ships nothing to other pages.
+- `character-portrait.tsx`: the game's student character frozen mid-wave in
+  a one-frame (`frameloop="demand"`) R3F canvas; software-GL visitors get an
+  initials medallion instead.
+- `hire-tracer.tsx`: the animated hiring-pipeline trace.
 
-### 5. Game <-> React bridge (`src/game/bus.ts`)
+### 5. fx primitives (`src/components/fx/`)
+
+`Magnetic`, `TiltCard`, `Reveal`, `SpotlightArea`, `Ticker`, `Counter`: the
+micro-interaction kit used by the gate, the one-pager, and classic pages.
+Every primitive degrades to static markup on coarse pointers and under
+`prefers-reduced-motion`.
+
+### 6. Hero diorama (`src/game3d/hero-diorama.tsx`)
+
+The landing gate's game panel: the real toon Great Court on a slow
+auto-orbit. Rules: lazy-mounts only when idle AND in view, dpr <= 1.5,
+frame loop paused offscreen, static frame under reduced motion, and it never
+mounts on software rasterizers (`src/game3d/detect.ts`), which keep the
+gradient placeholder.
+
+### 7. Game <-> React bridge (`src/game/bus.ts`)
 
 A typed `mitt` emitter. The world emits `panel:open` / `hint:show`; React overlays (`DialogPanel`, HUD) listen. React emits `panel:close` and `input:interact` (mobile button). Only discrete UI events cross the bus, never per-frame data.
 
