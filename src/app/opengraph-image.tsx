@@ -51,7 +51,7 @@ export default function OgImage() {
         >
           <span>walkable 3D Brisbane campus</span>
           <span>+</span>
-          <span>&gt;_ UQ-OS terminal</span>
+          <span>live status dashboard</span>
         </div>
       </div>
     ),

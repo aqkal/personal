@@ -56,38 +56,37 @@ function GameScene() {
   );
 }
 
-function TerminalScene() {
+function StatusScene() {
   return (
-    <div aria-hidden className="absolute inset-0 overflow-hidden bg-[#04070d] p-5">
-      <div className="flex gap-1.5">
-        <span className="size-2.5 rounded-full bg-magenta/70" />
-        <span className="size-2.5 rounded-full bg-amber/70" />
-        <span className="size-2.5 rounded-full bg-neon/70" />
+    <div aria-hidden className="absolute inset-0 overflow-hidden bg-bg p-5">
+      <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <span className="relative flex size-2.5">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-neon opacity-60" />
+          <span className="relative inline-flex size-2.5 rounded-full bg-neon" />
+        </span>
+        All systems operational
+      </p>
+      <p className="mt-1 font-mono text-[10px] text-muted">
+        uptime: 3+ years at UQ · incidents: 0
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {[
+          ["🎓", "Education"],
+          ["💼", "Experience"],
+          ["🚀", "Projects"],
+          ["🧰", "Skills"],
+        ].map(([icon, label]) => (
+          <div
+            key={label}
+            className="rounded-lg border border-line bg-surface px-2.5 py-2"
+          >
+            <p className="flex items-center gap-1.5 text-[11px] font-medium text-ink">
+              <span>{icon}</span> {label}
+              <span className="ml-auto size-1.5 rounded-full bg-neon" />
+            </p>
+          </div>
+        ))}
       </div>
-      <div className="mt-4 space-y-2 font-mono text-[11px] leading-relaxed text-neon/90 sm:text-xs">
-        <p>
-          <span className="text-cyan">visitor@portfolio</span>
-          <span className="text-muted">:~$</span> whoami
-        </p>
-        <p className="text-ink/80">{profile.tagline}</p>
-        <div className="hidden space-y-2 sm:block">
-          <p>
-            <span className="text-cyan">visitor@portfolio</span>
-            <span className="text-muted">:~$</span> ls ~/
-          </p>
-          <p className="text-ink/80">
-            about.md experience/ projects/ skills/ education/
-          </p>
-        </div>
-        <p>
-          <span className="text-cyan">visitor@portfolio</span>
-          <span className="text-muted">:~$</span>{" "}
-          <span className="animate-blink">█</span>
-        </p>
-      </div>
-      <span className="absolute right-4 top-4 rounded border border-neon/50 bg-neon/10 px-2 py-0.5 font-pixel text-[8px] text-neon">
-        ONLINE
-      </span>
     </div>
   );
 }
@@ -95,7 +94,7 @@ function TerminalScene() {
 export function ModeChooser({
   onChoose,
 }: {
-  onChoose: (mode: "game" | "terminal") => void;
+  onChoose: (mode: "game" | "status") => void;
 }) {
   const reduced = useReducedMotion();
 
@@ -165,17 +164,17 @@ export function ModeChooser({
           whileHover={reduced ? undefined : { scale: 1.02, y: -3 }}
           whileTap={{ scale: 0.985 }}
           type="button"
-          onClick={() => onChoose("terminal")}
-          className="group relative h-64 overflow-hidden rounded-xl border border-line text-left transition-colors hover:border-cyan/70 focus-visible:border-cyan sm:h-80"
+          onClick={() => onChoose("status")}
+          className="group relative h-64 overflow-hidden rounded-xl border border-line text-left transition-colors hover:border-neon/70 focus-visible:border-neon sm:h-80"
         >
-          <TerminalScene />
+          <StatusScene />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 pt-14">
-            <p className="font-pixel text-[10px] text-cyan">&gt;_ TERMINAL</p>
+            <p className="font-pixel text-[10px] text-neon">⚡ STATUS BOARD</p>
             <p className="mt-2 text-sm text-ink/85">
-              Command-line mode for keyboard purists. Same resume, one prompt.
+              Me, as a live system dashboard. Click around, plain English only.
             </p>
-            <p className="mt-3 inline-block rounded border border-cyan/60 bg-cyan/15 px-3 py-1 font-pixel text-[9px] text-cyan opacity-90 transition-all group-hover:bg-cyan/25">
-              BOOT UP ▶
+            <p className="mt-3 inline-block rounded border border-neon/60 bg-neon/15 px-3 py-1 font-pixel text-[9px] text-neon opacity-90 transition-all group-hover:bg-neon/25">
+              OPEN DASHBOARD ▶
             </p>
           </div>
         </m.button>

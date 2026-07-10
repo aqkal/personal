@@ -23,24 +23,21 @@ const GameShell = dynamic(
   },
 );
 
-const TerminalShell = dynamic(
-  () =>
-    import("@/components/terminal/terminal-shell").then(
-      (mod) => mod.TerminalShell,
-    ),
+const StatusShell = dynamic(
+  () => import("@/components/status/status-shell").then((mod) => mod.StatusShell),
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-dvh items-center justify-center bg-[#04070d]">
+      <div className="flex min-h-dvh items-center justify-center bg-bg">
         <p className="font-mono text-sm text-neon">
-          booting uq-os<span className="animate-blink">_</span>
+          checking system status<span className="animate-blink">_</span>
         </p>
       </div>
     ),
   },
 );
 
-type Mode = "choose" | "game" | "terminal";
+type Mode = "choose" | "game" | "status";
 
 const STORAGE_KEY = "interface";
 const SERVER_SENTINEL = "__server__";
@@ -73,11 +70,11 @@ export function HomeShell() {
       ? "boot"
       : stored === "game"
         ? "game"
-        : stored === "terminal"
-          ? "terminal"
+        : stored === "status"
+          ? "status"
           : "choose");
 
-  const choose = useCallback((next: "game" | "terminal") => {
+  const choose = useCallback((next: "game" | "status") => {
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -101,9 +98,9 @@ export function HomeShell() {
   if (mode === "game") {
     return <GameShell onExit={backToChooser} />;
   }
-  if (mode === "terminal") {
+  if (mode === "status") {
     return (
-      <TerminalShell onExit={backToChooser} onPlayGame={() => choose("game")} />
+      <StatusShell onExit={backToChooser} onPlayGame={() => choose("game")} />
     );
   }
   return <ModeChooser onChoose={choose} />;
