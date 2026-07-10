@@ -16,6 +16,7 @@
   /* ---- Fonts (variables injected by next/font in layout.tsx) ---- */
   --font-pixel: var(--font-press-start), monospace;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), sans-serif;
 
   --animate-blink: blink 1.1s steps(2, start) infinite;
   --animate-drift: drift 36s linear infinite;
@@ -23,6 +24,7 @@
   --animate-float: float 3.2s ease-in-out infinite;
   --animate-twinkle: twinkle 2.6s ease-in-out infinite;
   --animate-bob: bob 0.9s steps(2, end) infinite;
+  --animate-marquee: marquee 36s linear infinite;
 
   @keyframes blink {
     to {
@@ -62,6 +64,11 @@
     }
     50% {
       transform: translateY(-2px);
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Press_Start_2P } from "next/font/google";
+import { Inter, Press_Start_2P, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import { profile } from "@content";
 import {
@@ -20,6 +20,12 @@ const pressStart = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-press-start",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -64,7 +70,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${pressStart.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${pressStart.variable} ${spaceGrotesk.variable}`}
+    >
       <body className="antialiased">
         {children}
         <script
