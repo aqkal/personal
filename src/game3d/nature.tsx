@@ -96,30 +96,31 @@ export function Clouds() {
     }));
   }, []);
 
-  const group = useRef<THREE.Group>(null);
+  const refs = useRef<Array<THREE.Object3D | null>>([]);
   useFrame((_, dt) => {
-    const g = group.current;
-    if (!g) return;
-    g.children.forEach((child, i) => {
-      child.position.x += clouds[i % clouds.length].speed * dt;
-      if (child.position.x > 130) child.position.x = -130;
-    });
+    for (let i = 0; i < clouds.length; i++) {
+      const o = refs.current[i];
+      if (!o) continue;
+      o.position.x += clouds[i].speed * dt;
+      if (o.position.x > 130) o.position.x = -130;
+    }
   });
 
   return (
-    <group ref={group}>
+    <Instances geometry={geometry} limit={clouds.length} frustumCulled={false}>
+      <meshToonMaterial gradientMap={TOON} color="#ffffff" emissive="#e8f2fb" emissiveIntensity={0.55} />
       {clouds.map((c, i) => (
-        <mesh
+        <Instance
           key={i}
-          geometry={geometry}
+          ref={(el) => {
+            refs.current[i] = el as THREE.Object3D | null;
+          }}
           position={[c.x, c.y, c.z]}
-          rotation-y={c.rot}
+          rotation={[0, c.rot, 0]}
           scale={c.s}
-        >
-          <meshToonMaterial gradientMap={TOON} color="#ffffff" emissive="#e8f2fb" emissiveIntensity={0.55} />
-        </mesh>
+        />
       ))}
-    </group>
+    </Instances>
   );
 }
 
@@ -856,17 +857,17 @@ export function Birds() {
   });
   return (
     <group ref={group} position={[6, 25, 34]}>
-      {offsets.map((o, i) => (
-        <mesh
-          key={i}
-          geometry={geometry}
-          position={[Math.cos(o.a) * o.rad, o.y, Math.sin(o.a) * o.rad]}
-          rotation-y={-o.a}
-          scale={o.s}
-        >
-          <meshBasicMaterial color="#42505f" />
-        </mesh>
-      ))}
+      <Instances geometry={geometry} limit={offsets.length} frustumCulled={false}>
+        <meshBasicMaterial color="#42505f" />
+        {offsets.map((o, i) => (
+          <Instance
+            key={i}
+            position={[Math.cos(o.a) * o.rad, o.y, Math.sin(o.a) * o.rad]}
+            rotation={[0, -o.a, 0]}
+            scale={o.s}
+          />
+        ))}
+      </Instances>
     </group>
   );
 }

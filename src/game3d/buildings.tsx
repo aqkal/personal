@@ -18,7 +18,7 @@ import {
 } from "./layout";
 import { TOON, roundedBox } from "./materials";
 import { lcg } from "./nature";
-import { playerPos } from "./state";
+import { activeTarget } from "./state";
 
 /* ---------------------------------- shared ---------------------------------- */
 
@@ -29,27 +29,30 @@ function Label({
   position,
   children,
   accent = "#1f8a4c",
-  /** only render within this distance of the player (declutters far views) */
-  showWithin,
-  /** world-space anchor for the proximity check (position may be local) */
-  worldXZ,
+  /**
+   * World anchor of the owning interactable. When set, the label only shows
+   * while that interactable is the player's CURRENT target, so dense zones
+   * (arcade, garden) surface exactly one readable name at a time.
+   */
+  activeAt,
 }: {
   position: [number, number, number];
   children: string;
   accent?: string;
-  showWithin?: number;
-  worldXZ?: [number, number];
+  activeAt?: [number, number];
 }) {
-  const [visible, setVisible] = useState(showWithin === undefined);
+  const [visible, setVisible] = useState(activeAt === undefined);
   const tick = useRef(0);
 
   useFrame(() => {
-    if (showWithin === undefined || !worldXZ) return;
-    // cheap proximity check, every ~12 frames
-    tick.current = (tick.current + 1) % 12;
+    if (!activeAt) return;
+    // cheap check every few frames; activeTarget changes rarely
+    tick.current = (tick.current + 1) % 8;
     if (tick.current !== 0) return;
-    const d = Math.hypot(worldXZ[0] - playerPos.x, worldXZ[1] - playerPos.z);
-    const next = d < showWithin;
+    const next =
+      activeTarget.active &&
+      Math.abs(activeTarget.x - activeAt[0]) < 2.2 &&
+      Math.abs(activeTarget.z - activeAt[1]) < 2.2;
     setVisible((prev) => (prev === next ? prev : next));
   });
 
@@ -528,8 +531,7 @@ function ArcadeCabinet({ spec }: { spec: (typeof CABINETS)[number] }) {
       <Label
         position={[0, 2.6, 0]}
         accent="#b23a8f"
-        showWithin={16}
-        worldXZ={[spec.x, spec.z]}
+        activeAt={[spec.x, spec.z + 1.4]}
       >
         {spec.label.toUpperCase()}
       </Label>
@@ -579,8 +581,7 @@ function Crystal({ spec }: { spec: (typeof CRYSTALS)[number] }) {
       <Label
         position={[0, 2.7, 0]}
         accent="#1f8a4c"
-        showWithin={20}
-        worldXZ={[spec.x, spec.z]}
+        activeAt={[spec.x, spec.z]}
       >
         {spec.label.toUpperCase()}
       </Label>
