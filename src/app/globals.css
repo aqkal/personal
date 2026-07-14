@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* ---- Retro-arcade night palette ---- */
+  /* ---- Site palette: dark UI shell around a bright day world ---- */
   --color-bg: #070b14;
   --color-surface: #0d1424;
   --color-raised: #131c30;

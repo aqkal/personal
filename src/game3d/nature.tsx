@@ -280,18 +280,22 @@ export function Paths() {
 /* ---------------------------------- river ---------------------------------- */
 
 const riverVertex = /* glsl */ `
+  #include <fog_pars_vertex>
   varying vec2 vUv;
   varying vec3 vWorld;
   void main() {
     vUv = uv;
     vec4 w = modelMatrix * vec4(position, 1.0);
     vWorld = w.xyz;
-    gl_Position = projectionMatrix * viewMatrix * w;
+    vec4 mvPosition = viewMatrix * w;
+    gl_Position = projectionMatrix * mvPosition;
+    #include <fog_vertex>
   }
 `;
 
 const riverFragment = /* glsl */ `
   // note: three.js injects "uniform vec3 cameraPosition;" automatically
+  #include <fog_pars_fragment>
   uniform float uTime;
   varying vec2 vUv;
   varying vec3 vWorld;
@@ -335,33 +339,48 @@ const riverFragment = /* glsl */ `
     col += vec3(0.85, 0.9, 0.94) * foam * 0.45;
 
     gl_FragColor = vec4(col, 1.0);
+    #include <fog_fragment>
   }
 `;
 
 export function River() {
-  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+  // fog uniforms merged in so the water fades into the horizon haze like
+  // every other material; all three reaches share one ticking uTime
+  const uniforms = useMemo(
+    () =>
+      THREE.UniformsUtils.merge([
+        THREE.UniformsLib.fog,
+        { uTime: { value: 0 } },
+      ]),
+    [],
+  );
   const matRef = useRef<ShaderMaterial>(null);
   useFrame((_, dt) => {
     if (matRef.current) matRef.current.uniforms.uTime.value += dt;
   });
+  // the water sits just ABOVE the ground plane (y -0.02): it used to be at
+  // y -0.12, fully buried under the grass, which read as "the river never
+  // loads". Slightly different heights per reach avoid z-fighting where
+  // they overlap at the bend.
   return (
     <group>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.12, 52]}>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.004, 52]}>
         <planeGeometry args={[220, 22]} />
         <shaderMaterial
           ref={matRef}
           vertexShader={riverVertex}
           fragmentShader={riverFragment}
           uniforms={uniforms}
+          fog
         />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[55, -0.12, 0]}>
+      <mesh rotation-x={-Math.PI / 2} position={[55, -0.006, 0]}>
         <planeGeometry args={[22, 120]} />
-        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} />
+        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} fog />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[-55, -0.12, 30]}>
+      <mesh rotation-x={-Math.PI / 2} position={[-55, -0.006, 30]}>
         <planeGeometry args={[22, 60]} />
-        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} />
+        <shaderMaterial vertexShader={riverVertex} fragmentShader={riverFragment} uniforms={uniforms} fog />
       </mesh>
     </group>
   );
@@ -409,8 +428,8 @@ export function Skyline() {
           <Instance key={i} position={[t.x, t.h + 2, t.z]} />
         ))}
       </Instances>
-      {/* far-bank strip */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.05, 74]}>
+      {/* far-bank strip (above the ground plane so it actually shows) */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, 74]}>
         <planeGeometry args={[240, 26]} />
         <meshToonMaterial gradientMap={TOON} color="#9cb89a" />
       </mesh>
