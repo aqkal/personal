@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: `%s · ${profile.name}`,
   },
   description:
-    "An explorable 3D Brisbane campus (and a terminal) that is also my software engineering portfolio. Walk through my experience, projects, and skills.",
+    "An explorable 3D Brisbane campus and a spotlight portfolio, both built from my resume. Walk through my experience, projects, and skills.",
   openGraph: {
     type: "website",
     siteName: `${profile.name} · Portfolio`,

@@ -1,6 +1,6 @@
 # Pixel Portfolio
 
-A personal portfolio that is also a place: an explorable, stylized 3D night scene of a Brisbane university campus. Visitors choose an interface on landing (3D game world now, terminal in v2), or skip straight to a classic HTML site that search engines and busy recruiters see.
+A personal portfolio that is also a place: an explorable, stylized 3D scene of a sunny Brisbane university campus. Visitors choose an interface on landing (the 3D game world or a spotlight one-page portfolio), or skip straight to a classic HTML site with project case studies that search engines and busy recruiters see.
 
 ## Quickstart
 

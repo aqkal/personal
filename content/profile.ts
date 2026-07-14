@@ -3,7 +3,7 @@ import type { Profile } from "./schemas";
 /**
  * TODO(you): This is the ONLY file you must edit to personalize the site.
  * Replace name and social URLs with your real details.
- * Everything (hero, resume, SEO, game intro, terminal) reads from here.
+ * Everything (hero, resume, SEO, game HUD, one-pager) reads from here.
  */
 export const profile: Profile = {
   // TODO: your full display name

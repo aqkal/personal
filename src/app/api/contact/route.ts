@@ -53,6 +53,8 @@ async function verifyTurnstile(
 const oneLine = (s: string) => s.replace(/[\r\n]+/g, " ").slice(0, 120);
 
 export async function POST(req: Request) {
+  // check the declared size first, then the actual bytes: content-length can
+  // be absent or lied about with chunked encoding
   const length = Number(req.headers.get("content-length") ?? 0);
   if (length > 32_000) {
     return json(413, { error: "Message too large." });
@@ -60,7 +62,11 @@ export async function POST(req: Request) {
 
   let parsed: z.infer<typeof contactSchema>;
   try {
-    parsed = contactSchema.parse(await req.json());
+    const raw = await req.text();
+    if (raw.length > 32_000) {
+      return json(413, { error: "Message too large." });
+    }
+    parsed = contactSchema.parse(JSON.parse(raw));
   } catch {
     return json(400, { error: "Invalid submission. Check the fields and try again." });
   }

@@ -30,7 +30,6 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.0.0",
     "@opennextjs/cloudflare": "^1.20.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",

@@ -13,7 +13,7 @@ content/*.ts  (Zod-validated single source of truth)
    |
 src/app/page.tsx -> HomeShell (client)
    boot -> mode chooser -> GameShell (dynamic import) -> World3D (three.js)
-                        -> TerminalTeaser
+                        -> PortfolioShell (spotlight one-pager)
 ```
 
 ## Layers
@@ -27,7 +27,7 @@ src/app/page.tsx -> HomeShell (client)
 
 ### 2. App shell (`src/app/`)
 
-- `/` renders `HomeShell`: reads `localStorage.interface` (via `useSyncExternalStore`), shows the mode chooser, the game, or the terminal teaser.
+- `/` renders `HomeShell`: reads `localStorage.interface` (via `useSyncExternalStore`), shows the mode chooser, the game, or the spotlight one-pager.
 - `(classic)/` route group: server-rendered pages with nav/footer. All static (SSG).
 - `api/contact/route.ts`: the only server-side endpoint.
 - `sitemap.ts`, `robots.ts`, `rss.xml/route.ts`, `opengraph-image.tsx`: all generated at build.
@@ -47,7 +47,7 @@ src/app/page.tsx -> HomeShell (client)
 ### 4. Spotlight One-Pager (`src/components/portfolio/`)
 
 - `portfolio-shell.tsx`: interface 2. Split-identity hero, proof ticker,
-  about + fun facts, experience rows, featured project tilt cards, count-up
+  about + fun facts, experience rows, featured project cards, count-up
   stats, hire trace, latest-post card (meta passed from the server page
   through `HomeShell`), say-hello CTA, living footer (Brisbane clock),
   scroll-spy anchor nav. Dynamically imported; ships nothing to other pages.

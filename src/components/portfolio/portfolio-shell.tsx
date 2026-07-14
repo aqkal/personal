@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   education,
   experience,
@@ -38,6 +38,10 @@ const SECTIONS = [
   { id: "projects", label: "Projects" },
   { id: "contact", label: "Contact" },
 ] as const;
+
+// stable reference: a fresh array every render would tear down and rebuild
+// the IntersectionObservers on each re-render
+const SECTION_IDS = SECTIONS.map((s) => s.id);
 
 function useScrollSpy(ids: readonly string[]): string {
   const [active, setActive] = useState(ids[0]);
@@ -92,12 +96,11 @@ export function PortfolioShell({
   onPlayGame: () => void;
   latestPost: LatestPostMeta | null;
 }) {
-  const active = useScrollSpy(SECTIONS.map((s) => s.id));
+  const active = useScrollSpy(SECTION_IDS);
   const currentJob = experience.find((e) => e.end === null);
   const featured = projects.filter((p) => p.featured);
   const others = projects.filter((p) => !p.featured);
   const techCount = skills.reduce((n, s) => n + s.skills.length, 0);
-  const heroRef = useRef<HTMLDivElement>(null);
 
   return (
     <SpotlightArea className="min-h-dvh bg-bg text-ink">
@@ -144,7 +147,7 @@ export function PortfolioShell({
 
       <main className="mx-auto max-w-4xl px-5">
         {/* split-identity hero */}
-        <section ref={heroRef} className="grid items-center gap-8 py-16 sm:grid-cols-[1.2fr_1fr] sm:py-20">
+        <section className="grid items-center gap-8 py-16 sm:grid-cols-[1.2fr_1fr] sm:py-20">
           <Reveal>
             <p className="font-mono text-xs tracking-[0.25em] text-muted">
               {profile.location.toUpperCase()}

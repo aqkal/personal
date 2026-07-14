@@ -37,7 +37,9 @@ export default function ResumePage() {
     <article className="mx-auto max-w-3xl print:max-w-none">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            {profile.name}
+          </h1>
           <p className="mt-1 text-muted print:text-gray-600">
             {profile.tagline}
           </p>

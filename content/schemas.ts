@@ -4,9 +4,9 @@ import { z } from "zod";
  * Single source of truth schemas.
  *
  * Every content entry carries BOTH resume data (rendered on the classic HTML
- * pages and /resume) AND game-world metadata (`world`) used by the spawner to
- * place an interactable building/cabinet/signpost in the pixel world.
- * The future terminal interface reads the same data.
+ * pages, the spotlight one-pager, and /resume) AND game-world metadata
+ * (`world`) used by the spawner to place an interactable building, cabinet,
+ * or crystal in the 3D world.
  *
  * See docs/ADDING_CONTENT.md for copy-paste recipes.
  */

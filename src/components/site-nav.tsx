@@ -22,12 +22,12 @@ export function SiteNav() {
         className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-1 px-5 py-3"
       >
         <Link
-            href="/"
-            className="font-display text-sm font-bold tracking-tight text-neon transition-colors hover:text-amber"
-            title="Back to the world"
-          >
-            ▶ play
-          </Link>
+          href="/"
+          className="font-display text-sm font-bold tracking-tight text-neon transition-colors hover:text-amber"
+          title="Back to the world"
+        >
+          ▶ play
+        </Link>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           {links.map((l) => {
             const active =
