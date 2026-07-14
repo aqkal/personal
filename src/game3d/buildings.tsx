@@ -501,10 +501,14 @@ export function Arcade() {
 }
 
 const CABINET_BODY = roundedBox(1.15, 1.9, 0.95, 0.1);
+const CABINET_HULL = roundedBox(1.24, 1.99, 1.04, 0.12);
 
 function ArcadeCabinet({ spec }: { spec: (typeof CABINETS)[number] }) {
   return (
     <group position={[spec.x, 0, spec.z]}>
+      <mesh position={[0, 0.95, 0]} geometry={CABINET_HULL}>
+        <meshBasicMaterial color="#232838" side={THREE.BackSide} />
+      </mesh>
       <mesh position={[0, 0.95, 0]} geometry={CABINET_BODY}>
         <meshToonMaterial gradientMap={TOON} color="#39415f" />
       </mesh>
@@ -566,6 +570,11 @@ function Crystal({ spec }: { spec: (typeof CRYSTALS)[number] }) {
           emissive={spec.accent}
           emissiveIntensity={0.35}
         />
+        {/* outline shell rotates and bobs with the crystal */}
+        <mesh>
+          <octahedronGeometry args={[0.57, 0]} />
+          <meshBasicMaterial color="#232838" side={THREE.BackSide} />
+        </mesh>
       </mesh>
       <Label
         position={[0, 2.7, 0]}
@@ -705,10 +714,24 @@ export function StreetLamps() {
   return (
     <group>
       <Instances limit={LAMPS.length}>
+        <cylinderGeometry args={[0.095, 0.125, 3.16, 6]} />
+        <meshBasicMaterial color="#1f2a24" side={THREE.BackSide} />
+        {LAMPS.map((l, i) => (
+          <Instance key={i} position={[l.x, 1.55, l.z]} />
+        ))}
+      </Instances>
+      <Instances limit={LAMPS.length}>
         <cylinderGeometry args={[0.07, 0.1, 3.1, 6]} />
         <meshToonMaterial gradientMap={TOON} color="#3c4a44" />
         {LAMPS.map((l, i) => (
           <Instance key={i} position={[l.x, 1.55, l.z]} />
+        ))}
+      </Instances>
+      <Instances limit={LAMPS.length}>
+        <sphereGeometry args={[0.2, 10, 10]} />
+        <meshBasicMaterial color="#2a3a33" side={THREE.BackSide} />
+        {LAMPS.map((l, i) => (
+          <Instance key={i} position={[l.x, 3.18, l.z]} />
         ))}
       </Instances>
       <Instances limit={LAMPS.length}>

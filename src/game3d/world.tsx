@@ -29,6 +29,7 @@ import {
   Clouds,
   GrassTufts,
   Ground,
+  Hills,
   Paths,
   River,
   SetDressing,
@@ -101,7 +102,10 @@ export default function World3D({
         gl={glProps}
         camera={{ fov: 50, near: 0.5, far: 300, position: [0, 9, 19] }}
         className="!absolute !inset-0"
-        onCreated={() => gameBus.emit("world:ready")}
+        onCreated={({ gl }) => {
+          gl.toneMappingExposure = 1.12;
+          gameBus.emit("world:ready");
+        }}
       >
         <color attach="background" args={["#9fd0f2"]} />
         <fog attach="fog" args={["#c3ddf2", 70, 200]} />
@@ -125,6 +129,7 @@ export default function World3D({
         <SkyDome />
         {!reducedMotion && <Clouds />}
         <Ground />
+        <Hills />
         <Paths />
         <River />
         <Skyline />

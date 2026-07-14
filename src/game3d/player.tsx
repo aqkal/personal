@@ -157,6 +157,15 @@ export function Player() {
   return (
     <group ref={group} position={[PLAYER_START.x, 0, PLAYER_START.z]}>
       <group ref={body} name="body">
+        {/* outline shells (inverted hulls) for the main silhouette */}
+        <mesh position={[0, 1.02, 0]}>
+          <capsuleGeometry args={[0.295, 0.44, 6, 12]} />
+          <meshBasicMaterial color="#241a30" side={THREE.BackSide} />
+        </mesh>
+        <mesh position={[0, 1.66, 0]}>
+          <sphereGeometry args={[0.272, 18, 18]} />
+          <meshBasicMaterial color="#241a30" side={THREE.BackSide} />
+        </mesh>
         {/* torso: UQ purple hoodie */}
         <mesh position={[0, 1.02, 0]} castShadow>
           <capsuleGeometry args={[0.26, 0.42, 6, 12]} />
@@ -212,14 +221,22 @@ export function Player() {
           </mesh>
         </group>
       </group>
-      {/* legs */}
+      {/* legs (each with an outline shell that swings with the group) */}
       <group ref={legL} position={[-0.13, 0.62, 0]}>
+        <mesh position={[0, -0.28, 0]}>
+          <capsuleGeometry args={[0.125, 0.36, 4, 8]} />
+          <meshBasicMaterial color="#161c2e" side={THREE.BackSide} />
+        </mesh>
         <mesh position={[0, -0.28, 0]} castShadow>
           <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
           <meshToonMaterial gradientMap={TOON} color="#26324f" />
         </mesh>
       </group>
       <group ref={legR} position={[0.13, 0.62, 0]}>
+        <mesh position={[0, -0.28, 0]}>
+          <capsuleGeometry args={[0.125, 0.36, 4, 8]} />
+          <meshBasicMaterial color="#161c2e" side={THREE.BackSide} />
+        </mesh>
         <mesh position={[0, -0.28, 0]} castShadow>
           <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
           <meshToonMaterial gradientMap={TOON} color="#26324f" />

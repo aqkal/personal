@@ -333,10 +333,14 @@ const riverFragment = /* glsl */ `
     float sparkle = smoothstep(0.965, 1.0, sin(vWorld.x * 0.9 + n * 3.4 + uTime * 0.8));
     col += vec3(1.0, 0.97, 0.85) * sparkle * (0.35 + 0.5 * fresnel);
 
-    // soft foam along the banks
+    // stylized shallows: the water lightens toward the banks
     float edge = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+    float shore = smoothstep(0.11, 0.0, edge);
+    col = mix(col, vec3(0.47, 0.78, 0.86), shore * 0.45);
+
+    // soft foam right at the waterline
     float foam = smoothstep(0.045, 0.0, edge) * (0.5 + 0.5 * noise(p * 6.0 + uTime * 0.4));
-    col += vec3(0.85, 0.9, 0.94) * foam * 0.45;
+    col += vec3(0.85, 0.9, 0.94) * foam * 0.5;
 
     gl_FragColor = vec4(col, 1.0);
     #include <fog_fragment>
@@ -518,6 +522,19 @@ const PUFFS = (() => {
 export function TreeField() {
   return (
     <group>
+      {/* trunk outlines (inverted hull: dark back-facing shell) */}
+      <Instances limit={TREES.length}>
+        <cylinderGeometry args={[0.2, 0.35, 2.68, 7]} />
+        <meshBasicMaterial color="#2e2115" side={THREE.BackSide} />
+        {TREES.map((t, i) => (
+          <Instance
+            key={i}
+            position={[t.x, 1.3 * t.s, t.z]}
+            scale={[t.s, t.s, t.s]}
+            rotation={TRUNK_ROTATIONS[i]}
+          />
+        ))}
+      </Instances>
       {/* trunks */}
       <Instances limit={TREES.length}>
         <cylinderGeometry args={[0.16, 0.3, 2.6, 7]} />
@@ -528,6 +545,18 @@ export function TreeField() {
             position={[t.x, 1.3 * t.s, t.z]}
             scale={[t.s, t.s, t.s]}
             rotation={TRUNK_ROTATIONS[i]}
+          />
+        ))}
+      </Instances>
+      {/* canopy outlines */}
+      <Instances limit={PUFFS.length}>
+        <icosahedronGeometry args={[1.43, 1]} />
+        <meshBasicMaterial color="#20351f" side={THREE.BackSide} />
+        {PUFFS.map((p) => (
+          <Instance
+            key={p.key}
+            position={p.pos}
+            scale={[p.scale * 1.3, p.scale * 0.9, p.scale * 1.3]}
           />
         ))}
       </Instances>
@@ -729,10 +758,22 @@ const ROCK_SPOTS = (() => {
   return out;
 })();
 
-/** Bushes, flower beds, and rocks: three instanced draw calls of charm. */
+/** Bushes, flower beds, and rocks: a handful of instanced draw calls of charm. */
 export function SetDressing() {
   return (
     <group>
+      {/* bush outlines */}
+      <Instances limit={BUSH_SPOTS.length}>
+        <icosahedronGeometry args={[0.96, 1]} />
+        <meshBasicMaterial color="#20351f" side={THREE.BackSide} />
+        {BUSH_SPOTS.map((b, i) => (
+          <Instance
+            key={i}
+            position={[b.x, 0.45 * b.s, b.z]}
+            scale={[b.s, b.s * 0.75, b.s]}
+          />
+        ))}
+      </Instances>
       <Instances limit={BUSH_SPOTS.length}>
         <icosahedronGeometry args={[0.9, 1]} />
         <meshToonMaterial gradientMap={TOON} />
@@ -742,6 +783,27 @@ export function SetDressing() {
             position={[b.x, 0.45 * b.s, b.z]}
             scale={[b.s, b.s * 0.75, b.s]}
             color={b.c}
+          />
+        ))}
+      </Instances>
+      {/* contact shadows so props sit in the grass instead of floating on it */}
+      <Instances limit={BUSH_SPOTS.length + ROCK_SPOTS.length}>
+        <circleGeometry args={[1, 14]} />
+        <meshBasicMaterial color="#1c3822" transparent opacity={0.2} depthWrite={false} />
+        {BUSH_SPOTS.map((b, i) => (
+          <Instance
+            key={`b${i}`}
+            position={[b.x + 0.15, 0.027, b.z + 0.12]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            scale={[b.s * 1.05, b.s * 0.85, 1]}
+          />
+        ))}
+        {ROCK_SPOTS.map((rk, i) => (
+          <Instance
+            key={`r${i}`}
+            position={[rk.x + 0.1, 0.027, rk.z + 0.08]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            scale={[rk.s * 1.15, rk.s * 0.9, 1]}
           />
         ))}
       </Instances>
@@ -857,12 +919,43 @@ export function Boats() {
 
 /* ---------------------------------- ambience ---------------------------------- */
 
-/** Butterflies over the garden and riverbank (daytime fireflies). */
+/** Butterflies, riverside glints, and drifting jacaranda petals. */
 export function Butterflies() {
   return (
     <group>
       <Sparkles count={22} position={[-27, 1.8, 22]} scale={[14, 2.5, 14]} size={2.4} speed={0.35} color="#ffe28a" />
       <Sparkles count={16} position={[0, 1.6, 46]} scale={[26, 2, 8]} size={2} speed={0.3} color="#ffffff" />
+      {/* jacaranda petals drifting over the campus */}
+      <Sparkles count={26} position={[-27, 3.2, -14]} scale={[24, 5, 14]} size={2.2} speed={0.45} color="#c9a8f2" />
     </group>
+  );
+}
+
+/* ---------------------------------- horizon hills ---------------------------------- */
+
+const HILLS = [
+  { x: -80, z: -32, s: [36, 10, 26] as const, c: "#7cab86" },
+  { x: -74, z: 22, s: [30, 8, 22] as const, c: "#86b590" },
+  { x: -34, z: -80, s: [38, 11, 24] as const, c: "#79a884" },
+  { x: 26, z: -84, s: [42, 13, 28] as const, c: "#74a47f" },
+  { x: 82, z: -58, s: [32, 9, 24] as const, c: "#86b590" },
+  { x: 92, z: 26, s: [30, 9, 22] as const, c: "#7cab86" },
+];
+
+/** Soft green mounds past the playable edge so the horizon is never flat. */
+export function Hills() {
+  return (
+    <Instances limit={HILLS.length}>
+      <icosahedronGeometry args={[1, 1]} />
+      <meshToonMaterial gradientMap={TOON} />
+      {HILLS.map((h, i) => (
+        <Instance
+          key={i}
+          position={[h.x, -1.5, h.z]}
+          scale={[h.s[0], h.s[1], h.s[2]]}
+          color={h.c}
+        />
+      ))}
+    </Instances>
   );
 }

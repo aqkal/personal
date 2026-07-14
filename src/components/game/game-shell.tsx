@@ -101,6 +101,12 @@ export function GameShell({ onExit }: { onExit: () => void }) {
     <div className="relative h-dvh w-full overflow-hidden bg-bg">
       <World3D reducedMotion={reducedMotion} />
 
+      {/* subtle framing vignette (plain CSS, zero GPU cost) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_62%,rgba(8,16,30,0.26))]"
+      />
+
       {/* boot veil until the world reports ready */}
       <div
         aria-hidden={ready}
