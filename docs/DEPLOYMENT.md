@@ -32,13 +32,46 @@ Local dev: copy `.env.example` to `.env.local`. The Turnstile test keys in the e
 
 Uses the official [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) adapter (Workers, not the deprecated next-on-pages). Config lives in `wrangler.jsonc` and `open-next.config.ts`.
 
+The adapter is at least 1.20.6 to support the patched Next.js 16.3 release and
+Windows Turbopack paths. Prerendered pages use the
+[read-only static-assets cache](https://opennext.js.org/cloudflare/caching#ssg-site)
+on the existing `ASSETS` binding. The normal preview/deploy commands populate
+it automatically. No additional Cloudflare storage service is required.
+
 ```bash
 npx wrangler login          # one-time
 npm run preview:cf          # build + run the Workers build locally
 npm run deploy:cf           # build + deploy
 ```
 
-**Windows note:** the OpenNext bundler creates symlinks, which Windows blocks by default. Either enable Developer Mode (Settings -> System -> For developers) or run these commands from WSL. CI builds the Workers target on Linux either way, so compatibility is verified on every push even if you never build it locally.
+To verify the adapter beside a running Next development server, keep both the
+Next and OpenNext outputs in one isolated directory. OpenNext's
+`buildOutputPath` expects to find a `.next` directory beneath it, so the two
+variables must be set together:
+
+```powershell
+$env:OPEN_NEXT_BUILD_OUTPUT_PATH='.cf-build'
+$env:NEXT_DIST_DIR='.cf-build/.next'
+$env:NEXT_PUBLIC_SITE_URL='https://example.com'
+npm run build:cf
+```
+
+This writes `.cf-build/.next` and `.cf-build/.open-next` without touching the
+development server's `.next`. With neither variable set, normal CI and deploy
+commands retain the default root `.next` and `.open-next` paths used by
+`wrangler.jsonc`.
+
+With the same output variables set, `npm run test:http -- --cloudflare`
+populates that output's static cache and checks a local Worker. This also
+handles isolated outputs, which the adapter's preview CLI does not select
+automatically from `wrangler.jsonc`.
+
+On Windows, `npm run build:cf` loads the repository's scoped compatibility
+helper. It retries only denied package-directory links inside the selected
+OpenNext output as directory junctions, then normalizes the generated handler
+for an isolated `NEXT_DIST_DIR`. No Developer Mode or WSL setup is required.
+Linux runs the adapter normally without this helper. `preview:cf` and
+`deploy:cf` both use the same build wrapper before starting Wrangler.
 
 Set secrets once:
 

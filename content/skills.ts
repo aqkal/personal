@@ -6,14 +6,14 @@ import type { SkillCategory } from "./schemas";
 export const skills: SkillCategory[] = [
   {
     id: "languages",
-    title: "Programming Languages",
+    title: "Languages",
     skills: [
+      "TypeScript",
+      "JavaScript",
       "Python",
       "Java",
       "C",
       "C++",
-      "JavaScript",
-      "TypeScript",
       "Haskell",
     ],
     world: {
@@ -24,16 +24,17 @@ export const skills: SkillCategory[] = [
   },
   {
     id: "web",
-    title: "Web Development",
+    title: "Web & Databases",
     skills: [
+      "React",
+      "Next.js",
       "HTML",
       "CSS",
-      "JavaScript",
-      "Next.js",
       "REST APIs",
-      "WordPress",
+      "PostgreSQL",
       "Supabase",
-      "Vercel",
+      "WordPress",
+      "FHIR Healthcare APIs",
     ],
     world: {
       zone: "garden",
@@ -43,33 +44,36 @@ export const skills: SkillCategory[] = [
   },
   {
     id: "engineering",
-    title: "Software Engineering",
+    title: "AI & Computer Vision",
     skills: [
+      "Retrieval-Augmented Generation (RAG)",
+      "pgvector",
+      "OpenCV",
+    ],
+    world: {
+      zone: "garden",
+      sprite: "signpost",
+      dialog: ["From course-material retrieval to computer vision for ship hulls."],
+    },
+  },
+  {
+    id: "tools",
+    title: "Engineering & Tools",
+    skills: [
+      "Git",
+      "GitHub",
+      "Docker",
+      "Terraform",
+      "Vercel",
+      "Linux",
+      "Playwright",
+      "CI/CD",
       "Data Structures & Algorithms",
       "Object-Oriented Programming",
       "Software Architecture & System Design",
       "Microservices",
       "Software Testing",
       "Debugging",
-    ],
-    world: {
-      zone: "garden",
-      sprite: "signpost",
-      dialog: ["Engineering fundamentals - the roots under everything else."],
-    },
-  },
-  {
-    id: "tools",
-    title: "Tools & Technologies",
-    skills: [
-      "Git",
-      "GitHub",
-      "Docker",
-      "Terraform",
-      "Linux",
-      "OpenCV",
-      "FHIR Healthcare APIs",
-      "CI/CD",
       "Agile Workflows",
     ],
     world: {

@@ -3,18 +3,20 @@
 
 # next.js
 /.next/
+/.next-*/
 /out/
 next-env.d.ts
 *.tsbuildinfo
 
 # cloudflare / opennext
 /.open-next/
+/.cf-build/
 /.wrangler/
 
 # vercel
 /.vercel/
 
-# env files — never commit secrets (see docs/SECURITY.md)
+# env files: never commit secrets (see docs/SECURITY.md)
 .env
 .env.*
 !.env.example
@@ -22,3 +24,25 @@ next-env.d.ts
 # misc
 .DS_Store
 npm-debug.log*
+/.tmp-*
+
+# Blender backups and generated review artifacts
+*.blend[0-9]*
+/assets-source/**/*.png
+/assets-source/campus-source-review.json
+/assets-source/driver-clearance-review.json
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Local inspiration references
+/inspo/
+
+# Local agent instructions and configuration
+CLAUDE.md
+AGENTS.md
+/.claude/
+/.codex/
+/.agents/

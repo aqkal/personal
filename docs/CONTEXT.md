@@ -2,26 +2,28 @@
 
 ## What this is
 
-A personal portfolio website for a University of Queensland Software Engineering student, built as an interactive experience rather than a static page. The site presents two interfaces on landing:
+A personal portfolio website for a University of Queensland Computer Engineering student, built as an interactive experience rather than a static page. The site presents two interfaces on landing:
 
 1. **Game world**: a stylized 3D scene of a sunny Brisbane day, inspired by UQ's St Lucia campus. The visitor walks a small student character between zones. Interacting with a building, arcade cabinet, or garden crystal opens an RPG-style dialog with real resume content.
-2. **Spotlight One-Pager**: a single scrolling portfolio page assembled from the proven patterns of the best engineer portfolios (Brittany Chiang's spotlight cursor and experience-row anatomy, Adham Dannaway's split-identity hero, Tamal Sen's funnel order, Jhey Tompkins' living footer): split hero with the 3D character as a frozen-wave portrait, proof ticker, about + fun facts, experience rows, featured project cards linking to case studies, count-up stats, the "how hiring me works" trace, latest blog post, a say-hello bookend, and a footer with a live Brisbane clock. Zero learning curve; the CS flavor is garnish.
+2. **Spotlight One-Pager**: a single scrolling portfolio page with a split hero and frozen character portrait, proof ticker, about and experience sections, featured project cards, skills, the latest blog post, contact call to action, and a footer with a live Brisbane clock.
 
-There is always a third path: the **classic site** (`/about`, `/experience`, `/projects`, `/blog`, `/contact`, `/resume`). This is what crawlers index, what reduced-motion users get offered, and what recruiters in a hurry click.
+Deep pages for project case studies, blog posts, contact, and the resume share the one-pager's navigation and visual system. `/about`, `/experience`, and the `/projects` index redirect into the current portfolio surfaces.
 
 ## The world, briefly
 
-- **UQ Campus** (north-west): an enclosed sandstone Great Court (brick coursing, cloister colonnades, arched windows, a south entrance gate) with a clock tower, jacaranda trees dropping blossom carpets, and a scholarship plaque. Interacting at the gate opens the education panel.
-- **Career District** (north-east): one lit office tower per work experience entry.
-- **Project Arcade** (south-east): one neon arcade cabinet per project. One extra cabinet has no label; it plays Snake, with a persistent high score.
-- **Skills Garden** (south-west): one floating crystal per skill category.
-- **Blog Café** (west) and **Post Office** (east): portals to the blog and contact form.
-- **Brisbane river** wraps the south and east, with the city skyline and a lit bridge you can walk to a lookout on.
+- **UQ Campus** (north-west): a compact D-shaped Great Court with sandstone wings, curved cloisters, a flat Forgan Smith tower, jacarandas, and a scholarship plaque. The expanded precinct also includes Duhig Tower, UQ Lakes, and the Dr Mary Mahoney AO Amphitheatre as sourced landmark stops.
+- **Work Experience** (north-east): distinct Qualia, DSR Branding, and BucklerX buildings. Their entrances open normal experience descriptions; Qualia remains under construction.
+- **Projects** (south-east): five miniature project displays sit inside individual bays of an open Engineering gallery. An unobstructed front aisle connects their smaller interaction markers; each opens its normal description. A nearby bonus cabinet plays Snake with a persistent high score.
+- **Skills Garden** (south-west): four sandstone stations with category symbols and skill descriptions.
+- **Riverfront**: café and writing/contact stops, a passenger ferry terminal, and a raised pedestrian bridge to a furnished lookout island.
+- **Playable island**: a continuous rounded campus with visible sandstone edges and surrounding water. No distant skyline buildings or unfinished far-bank lawn remain. The buggy has unlimited forward and reverse boost; ferries carry passengers between the two docks.
+
+The compact Work index provides descriptions, routing, and safe travel immediately. Floating district labels and the map support navigation. Interactive portfolio demonstrations were superseded at the owner's request; actual work descriptions remain the primary presentation.
 
 ## Design principles
 
 1. **One source of truth.** All resume content lives in `content/*.ts`, validated by Zod. The 3D world, the one-pager, the classic pages, and the resume page all render from the same objects. Editing content never requires touching rendering code.
-2. **Never lag.** Smoothness beats spectacle, which is why the world is a bright day scene: no shadow maps, no postprocessing, two lights, everything instanced (see the performance contract in ARCHITECTURE.md). The 3D bundle loads only when chosen, per-frame data avoids React state, and a quality ladder degrades resolution before frame rate.
+2. **Protect frame time.** The world is a bright day scene with one directional shadow map, one hemisphere light, no postprocessing, and instancing for repeated geometry. The full playable world loads only when chosen, per-frame data avoids React state, and the two-tier quality ladder adjusts resolution and shadow-map size. Instrumentation is opt-in with `?perf`.
 3. **Dual-host by construction.** The same codebase deploys to Vercel and Cloudflare Workers. Anything host-exclusive is banned (see ARCHITECTURE.md).
 4. **Security and privacy by default.** Strict headers, a hardened contact endpoint, cookieless analytics, no database, no stored user data.
 5. **No em dashes in any copy.** Owner's style rule; use commas, colons, or hyphens.

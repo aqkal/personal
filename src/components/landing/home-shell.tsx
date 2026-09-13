@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { LatestPostMeta } from "@/components/portfolio/portfolio-shell";
+import { INTERFACE_KEY, setStoredInterface } from "@/lib/interface-mode";
 import { ModeChooser } from "./mode-chooser";
 
 /**
@@ -16,7 +17,7 @@ const GameShell = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex min-h-dvh items-center justify-center bg-bg">
-        <p className="font-pixel text-xs text-neon">
+        <p role="status" className="font-pixel text-xs text-accent">
           LOADING WORLD<span className="animate-blink">_</span>
         </p>
       </div>
@@ -33,7 +34,7 @@ const PortfolioShell = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex min-h-dvh items-center justify-center bg-bg">
-        <p className="font-mono text-sm text-neon">
+        <p role="status" className="font-mono text-sm text-accent">
           opening portfolio<span className="animate-blink">_</span>
         </p>
       </div>
@@ -43,7 +44,6 @@ const PortfolioShell = dynamic(
 
 type Mode = "choose" | "game" | "portfolio";
 
-const STORAGE_KEY = "interface";
 const SERVER_SENTINEL = "__server__";
 
 function subscribeNever() {
@@ -51,8 +51,10 @@ function subscribeNever() {
 }
 
 function readStoredInterface(): string | null {
+  const requested = new URLSearchParams(window.location.search).get("view");
+  if (requested === "game" || requested === "portfolio") return requested;
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(INTERFACE_KEY);
   } catch {
     return null;
   }
@@ -63,14 +65,17 @@ export function HomeShell({
 }: {
   latestPost: LatestPostMeta | null;
 }) {
-  // SSR renders a blank boot frame; the client snapshot kicks in on hydration
-  // (returning visitors go straight back into their chosen interface).
+  // Render the front door on the server so identity and deep-page links are
+  // available before hydration, including when JavaScript is unavailable.
   const stored = useSyncExternalStore(
     subscribeNever,
     readStoredInterface,
     () => SERVER_SENTINEL,
   );
   const [override, setOverride] = useState<Mode | null>(null);
+  useEffect(() => {
+    if (stored === "game" || stored === "portfolio") setStoredInterface(stored);
+  }, [stored]);
 
   const mode: Mode | "boot" =
     override ??
@@ -83,28 +88,23 @@ export function HomeShell({
           : "choose");
 
   const choose = useCallback((next: "game" | "portfolio") => {
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // non-fatal
-    }
+    clearViewQuery();
+    setStoredInterface(next);
     setOverride(next);
   }, []);
 
   const backToChooser = useCallback(() => {
+    clearViewQuery();
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(INTERFACE_KEY);
     } catch {
       // non-fatal
     }
     setOverride("choose");
   }, []);
 
-  if (mode === "boot") {
-    return <div className="min-h-dvh bg-bg" />;
-  }
   if (mode === "game") {
-    return <GameShell onExit={backToChooser} />;
+    return <GameShell onExit={backToChooser} onPortfolio={() => choose("portfolio")} />;
   }
   if (mode === "portfolio") {
     return (
@@ -116,4 +116,11 @@ export function HomeShell({
     );
   }
   return <ModeChooser onChoose={choose} />;
+}
+
+function clearViewQuery() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("view");
+  url.hash = "";
+  window.history.replaceState(window.history.state, "", url);
 }

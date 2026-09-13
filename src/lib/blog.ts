@@ -34,11 +34,11 @@ export function getAllPosts(): BlogPost[] {
         slug,
         meta,
         content,
-        readingMinutes: Math.max(1, Math.round(words / 220)),
+        readingMinutes: Math.max(1, Math.ceil(words / 220)),
       };
     })
     .filter((p) => showDrafts || !p.meta.draft)
-    .sort((a, b) => (a.meta.date < b.meta.date ? 1 : -1));
+    .sort((a, b) => b.meta.date.localeCompare(a.meta.date) || a.slug.localeCompare(b.slug));
 }
 
 export function getPost(slug: string): BlogPost | undefined {

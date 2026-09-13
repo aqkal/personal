@@ -5,9 +5,9 @@ export const education: Education[] = [
   {
     id: "uq-software-engineering",
     institution: "University of Queensland",
-    degree: "Bachelor of Engineering (Honours): Software Engineering",
+    degree: "Bachelor of Engineering (Honours): Computer Engineering",
     location: "Brisbane, QLD",
-    start: "2023-02",
+    start: "2025",
     end: null,
     highlights: [
       "Developing expertise in software development, including Python, Java, and C++.",
@@ -19,7 +19,7 @@ export const education: Education[] = [
       sprite: "campus",
       dialog: [
         "The University of Queensland - my home campus.",
-        "Software Engineering, with a 25% scholarship renewed every semester.",
+        "Computer Engineering, with a 25% scholarship renewed every semester.",
       ],
     },
   },

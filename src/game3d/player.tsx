@@ -1,252 +1,218 @@
 "use client";
 
-import { useKeyboardControls } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRapier } from "@react-three/rapier";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { isBlocked, PLAYER_START } from "./layout";
-import { TOON } from "./materials";
+import { createCameraBoom, resolveCameraBoom } from "./camera-boom";
+import { followMovingTarget } from "./camera-follow";
+import { damp, wrapAngle } from "./motion";
+import { PlayerVisibility } from "./player-visibility";
 import {
-  cameraOrbit,
-  joystick,
-  playerHeading,
-  playerPos,
-  runtime,
-} from "./state";
+  STUDENT_SEATED_PELVIS_Y,
+  StudentAvatar,
+  type StudentAvatarProps,
+} from "./student-avatar";
+import { cameraOrbit, playerHeading, playerMotion, playerPos, runtime, travelState } from "./state";
+import { SCOOTER_DIMENSIONS } from "./travel-layout";
+import { travelPresentation } from "./travel-presentation";
 
-const WALK_SPEED = 6.2;
-const SPRINT_SPEED = 9.6;
-const INTRO_SECONDS = 4.2;
+const INTRO_SECONDS = 1.2;
+const INTRO_FROM = new THREE.Vector3(24, 34, 44);
+const INTRO_LOOK_FROM = new THREE.Vector3(0, 1.2, 8);
+const CAMERA_RADIUS = 0.45;
+const BUGGY_SEAT = { x: -0.36, y: 1.02, z: -0.22 };
+const FERRY_SEAT = { x: 0, y: 1.1, z: -3.35 };
+type QueryCollider = { parent(): { isFixed(): boolean } | null };
+const fixedOnly = (collider: QueryCollider) => collider.parent()?.isFixed() ?? false;
+const easeInOut = (value: number) => value * value * (3 - 2 * value);
 
-/** Cinematic fly-in: high over the river/city, sweeping down to the plaza. */
-const INTRO_FROM = new THREE.Vector3(26, 46, 66);
-const INTRO_LOOK_FROM = new THREE.Vector3(0, 6, 76);
-
-export type ControlName =
-  | "forward"
-  | "backward"
-  | "left"
-  | "right"
-  | "sprint"
-  | "interact";
-
-const tmpTarget = new THREE.Vector3();
-const tmpCam = new THREE.Vector3();
-const tmpLook = new THREE.Vector3();
-
-const easeInOut = (t: number) => t * t * (3 - 2 * t);
-
-/**
- * Stylized student character (UQ purple hoodie): procedural walk cycle,
- * collision-aware camera-relative movement, orbitable third-person camera.
- * All per-frame math stays in refs and module state.
- */
+/** Presentation-only actor. CampusPhysics owns all movement and collision. */
 export function Player() {
-  const group = useRef<THREE.Group>(null);
-  const legL = useRef<THREE.Group>(null);
-  const legR = useRef<THREE.Group>(null);
-  const armL = useRef<THREE.Group>(null);
-  const armR = useRef<THREE.Group>(null);
-  const body = useRef<THREE.Group>(null);
-  const walkPhase = useRef(0);
-  const [, getKeys] = useKeyboardControls<ControlName>();
+  const visual = useRef<THREE.Group>(null);
+  const occluded = useRef(false);
+  const occlusionTimer = useRef(0);
+  const heading = useRef(playerHeading.value);
+  const follow = useRef(new THREE.Vector3(playerPos.x, playerMotion.worldY + 1.35, playerPos.z));
+  const previousFocus = useRef(new THREE.Vector3(playerPos.x, playerMotion.worldY + 1.35, playerPos.z));
+  const followMode = useRef(travelState.mode);
+  const boom = useRef(createCameraBoom(13));
+  const motion = useRef<StudentAvatarProps>({ speed: 0 });
+  const { world, rapier } = useRapier();
+  const cameraShape = useMemo(() => new rapier.Ball(CAMERA_RADIUS), [rapier]);
+  const pivot = useMemo(() => new THREE.Vector3(), []);
+  const direction = useMemo(() => new THREE.Vector3(), []);
+  const desiredCamera = useMemo(() => new THREE.Vector3(), []);
+  const lookAt = useMemo(() => new THREE.Vector3(), []);
+  const desiredVisual = useMemo(() => new THREE.Vector3(), []);
+  const desiredFocus = useMemo(() => new THREE.Vector3(), []);
+  const vehicleRotation = useMemo(() => new THREE.Quaternion(), []);
+  const vehicleEuler = useMemo(() => new THREE.Euler(0, 0, 0, "YXZ"), []);
+
+  useEffect(() => {
+    if (cameraOrbit.intro === 0) {
+      cameraOrbit.yaw = cameraOrbit.targetYaw = 0;
+      cameraOrbit.pitch = cameraOrbit.targetPitch = 0.68;
+      cameraOrbit.dist = cameraOrbit.targetDist = 13;
+    }
+    const skipIntro = () => {
+      if (runtime.playing && !runtime.paused) cameraOrbit.intro = 1;
+    };
+    window.addEventListener("keydown", skipIntro);
+    window.addEventListener("pointerdown", skipIntro);
+    window.addEventListener("touchstart", skipIntro, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", skipIntro);
+      window.removeEventListener("pointerdown", skipIntro);
+      window.removeEventListener("touchstart", skipIntro);
+    };
+  }, []);
 
   useFrame(({ camera }, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
-    const g = group.current;
-    if (!g) return;
+    const group = visual.current;
+    if (!group) return;
 
-    // input -> camera-relative movement
-    let fwd = 0;
-    let right = 0;
-    if (!runtime.paused && cameraOrbit.intro >= 1) {
-      const k = getKeys();
-      if (k.forward) fwd += 1;
-      if (k.backward) fwd -= 1;
-      if (k.left) right -= 1;
-      if (k.right) right += 1;
-      if (joystick.active) {
-        fwd = -joystick.y;
-        right = joystick.x;
+    const orbitRate = runtime.reducedMotion ? 24 : 14;
+    cameraOrbit.yaw += wrapAngle(cameraOrbit.targetYaw - cameraOrbit.yaw) * (1 - Math.exp(-orbitRate * dt));
+    cameraOrbit.pitch = damp(cameraOrbit.pitch, cameraOrbit.targetPitch, orbitRate, dt);
+    cameraOrbit.dist = damp(cameraOrbit.dist, cameraOrbit.targetDist, 10, dt);
+
+    const mode = travelState.mode;
+    if (mode === "driving") {
+      const vehicle = travelPresentation.buggy;
+      vehicleRotation.setFromEuler(vehicleEuler.set(vehicle.pitch, vehicle.heading, vehicle.lean, "YXZ"));
+      desiredVisual.set(BUGGY_SEAT.x, BUGGY_SEAT.y - STUDENT_SEATED_PELVIS_Y, BUGGY_SEAT.z).applyQuaternion(vehicleRotation);
+      desiredVisual.set(desiredVisual.x + vehicle.x, desiredVisual.y + vehicle.y, desiredVisual.z + vehicle.z);
+      desiredFocus.set(vehicle.x, vehicle.y + 1.15, vehicle.z);
+    } else if (mode === "scooter") {
+      const vehicle = travelPresentation.scooter;
+      vehicleRotation.setFromEuler(vehicleEuler.set(0, vehicle.heading, vehicle.lean, "YXZ"));
+      desiredVisual.set(0, SCOOTER_DIMENSIONS.deckY, .04).applyQuaternion(vehicleRotation);
+      desiredVisual.set(desiredVisual.x + vehicle.x, desiredVisual.y + vehicle.y, desiredVisual.z + vehicle.z);
+      desiredFocus.set(vehicle.x, vehicle.y + 1.5, vehicle.z);
+    } else if (mode === "ferry") {
+      const vehicle = travelPresentation.ferry;
+      vehicleRotation.setFromEuler(vehicleEuler.set(0, vehicle.heading, 0, "YXZ"));
+      desiredVisual.set(FERRY_SEAT.x, FERRY_SEAT.y - STUDENT_SEATED_PELVIS_Y, FERRY_SEAT.z).applyQuaternion(vehicleRotation);
+      desiredVisual.set(desiredVisual.x + vehicle.x, desiredVisual.y + vehicle.y, desiredVisual.z + vehicle.z);
+      desiredFocus.set(vehicle.x, vehicle.y + 1.3, vehicle.z);
+    } else {
+      desiredVisual.set(playerPos.x, playerMotion.worldY, playerPos.z);
+      desiredFocus.set(playerPos.x, playerMotion.worldY + 1.35, playerPos.z);
+    }
+    // A mounted actor shares the resolved vehicle transform. Camera smoothing
+    // remains independent, so turning cannot pull the driver through the roof.
+    if (mode !== "walking" || group.position.distanceToSquared(desiredVisual) > 100) {
+      group.position.copy(desiredVisual);
+    } else {
+      group.position.x = damp(group.position.x, desiredVisual.x, 18, dt);
+      group.position.y = damp(group.position.y, desiredVisual.y, 18, dt);
+      group.position.z = damp(group.position.z, desiredVisual.z, 18, dt);
+    }
+    if (mode === "driving") heading.current = travelPresentation.buggy.heading;
+    else if (mode === "scooter") heading.current = travelPresentation.scooter.heading;
+    else if (mode === "ferry") heading.current = travelPresentation.ferry.heading;
+    else heading.current += wrapAngle(playerHeading.value - heading.current) * (1 - Math.exp(-18 * dt));
+    if (mode === "walking") group.rotation.set(0, heading.current, 0);
+    else group.quaternion.copy(vehicleRotation);
+
+    motion.current.speed = mode === "walking" ? Math.hypot(playerMotion.vx, playerMotion.vz) : 0;
+    motion.current.travelled = playerMotion.distance;
+    motion.current.airborne = mode === "walking" && !playerMotion.grounded;
+    motion.current.landing = mode === "walking" && playerMotion.landing > 0.08;
+    motion.current.driving = mode === "driving";
+    motion.current.scooter = mode === "scooter";
+    motion.current.scooterSteering = travelPresentation.scooter.steering;
+    motion.current.seated = mode === "ferry";
+
+    if (follow.current.distanceToSquared(desiredFocus) > 100) {
+      follow.current.copy(desiredFocus);
+    } else if (mode !== "walking") {
+      // Ease the initial mount offset, then carry the camera with the exact
+      // presented vehicle motion. Do not chase a moving world-space target.
+      if (followMode.current !== mode) previousFocus.current.copy(desiredFocus);
+      followMovingTarget(follow.current, previousFocus.current, desiredFocus, dt);
+    } else {
+      follow.current.x = damp(follow.current.x, desiredFocus.x, 13, dt);
+      follow.current.y = damp(follow.current.y, desiredFocus.y, 10, dt);
+      follow.current.z = damp(follow.current.z, desiredFocus.z, 13, dt);
+    }
+    previousFocus.current.copy(desiredFocus);
+    followMode.current = mode;
+    pivot.copy(follow.current);
+    const cosPitch = Math.cos(cameraOrbit.pitch);
+    direction.set(
+      Math.sin(cameraOrbit.yaw) * cosPitch,
+      Math.sin(cameraOrbit.pitch),
+      Math.cos(cameraOrbit.yaw) * cosPitch,
+    );
+    const distance = resolveCameraBoom(
+      boom.current,
+      pivot,
+      direction,
+      cameraOrbit.dist,
+      dt,
+      (x, y, z) => Boolean(world.intersectionWithShape(
+        { x, y, z },
+        { x: 0, y: 0, z: 0, w: 1 },
+        cameraShape,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        fixedOnly,
+      )),
+    );
+    desiredCamera.copy(direction).multiplyScalar(distance).add(pivot);
+    lookAt.copy(pivot);
+
+    if (cameraOrbit.intro < 1 && runtime.playing) {
+      cameraOrbit.intro = Math.min(1, cameraOrbit.intro + dt / INTRO_SECONDS);
+      const progress = easeInOut(cameraOrbit.intro);
+      camera.position.lerpVectors(INTRO_FROM, desiredCamera, progress);
+      lookAt.lerpVectors(INTRO_LOOK_FROM, pivot, progress);
+    } else if (cameraOrbit.intro < 1) {
+      camera.position.copy(INTRO_FROM);
+      lookAt.copy(INTRO_LOOK_FROM);
+    } else {
+      camera.position.copy(desiredCamera);
+    }
+    camera.lookAt(lookAt);
+
+    occlusionTimer.current -= dt;
+    if (occlusionTimer.current <= 0) {
+      occlusionTimer.current = 0.08;
+      occluded.current = false;
+      if (cameraOrbit.intro >= 1) {
+        const torso = { x: group.position.x, y: group.position.y + 1.12, z: group.position.z };
+        const dx = camera.position.x - torso.x;
+        const dy = camera.position.y - torso.y;
+        const dz = camera.position.z - torso.z;
+        const length = Math.hypot(dx, dy, dz);
+        if (length > 1.4) {
+          const ray = new rapier.Ray(torso, { x: dx / length, y: dy / length, z: dz / length });
+          occluded.current = Boolean(world.castRay(
+            ray,
+            length - 0.65,
+            true,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            fixedOnly,
+          ));
+        }
       }
     }
-
-    const yaw = cameraOrbit.yaw;
-    // camera sits at +offsetDir; forward on screen is the opposite
-    const fx = -Math.sin(yaw);
-    const fz = -Math.cos(yaw);
-    const rx = Math.cos(yaw);
-    const rz = -Math.sin(yaw);
-
-    let vx = fx * fwd + rx * right;
-    let vz = fz * fwd + rz * right;
-    const len = Math.hypot(vx, vz);
-    if (len > 1e-3) {
-      const k = getKeys();
-      const speed = (k.sprint ? SPRINT_SPEED : WALK_SPEED) / Math.max(len, 1);
-      vx *= speed;
-      vz *= speed;
-    } else {
-      vx = 0;
-      vz = 0;
-    }
-
-    // axis-separated movement so we slide along walls
-    const nx = playerPos.x + vx * dt;
-    if (!isBlocked(nx, playerPos.z)) playerPos.x = nx;
-    const nz = playerPos.z + vz * dt;
-    if (!isBlocked(playerPos.x, nz)) playerPos.z = nz;
-
-    g.position.set(playerPos.x, 0, playerPos.z);
-
-    // heading + walk cycle
-    const moving = vx !== 0 || vz !== 0;
-    if (moving) {
-      const target = Math.atan2(vx, vz);
-      let diff = target - playerHeading.value;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      playerHeading.value += diff * Math.min(1, dt * 12);
-      g.rotation.y = playerHeading.value;
-      walkPhase.current += dt * (Math.hypot(vx, vz) > WALK_SPEED + 1 ? 13 : 10);
-    } else {
-      walkPhase.current = THREE.MathUtils.lerp(
-        walkPhase.current,
-        Math.round(walkPhase.current / Math.PI) * Math.PI,
-        dt * 10,
-      );
-    }
-
-    const swing = Math.sin(walkPhase.current) * (moving ? 0.75 : 0.05);
-    if (legL.current) legL.current.rotation.x = swing;
-    if (legR.current) legR.current.rotation.x = -swing;
-    if (armL.current) armL.current.rotation.x = -swing * 0.85;
-    if (armR.current) armR.current.rotation.x = swing * 0.85;
-    if (body.current) {
-      body.current.position.y = moving
-        ? Math.abs(Math.sin(walkPhase.current)) * 0.06
-        : Math.sin(performance.now() / 900) * 0.02;
-    }
-
-    // orbit camera target position
-    const zoomK = runtime.paused ? 0.62 : 1;
-    const dist = cameraOrbit.dist * zoomK;
-    const cosP = Math.cos(cameraOrbit.pitch);
-    const sinP = Math.sin(cameraOrbit.pitch);
-    tmpCam.set(
-      playerPos.x + Math.sin(yaw) * dist * cosP,
-      dist * sinP + 1.2,
-      playerPos.z + Math.cos(yaw) * dist * cosP,
-    );
-    tmpLook.set(playerPos.x, 1.5, playerPos.z);
-
-    if (cameraOrbit.intro < 1) {
-      // cinematic fly-in from above the river; any input skips it
-      cameraOrbit.intro = Math.min(1, cameraOrbit.intro + dt / INTRO_SECONDS);
-      const t = easeInOut(cameraOrbit.intro);
-      camera.position.lerpVectors(INTRO_FROM, tmpCam, t);
-      tmpTarget.lerpVectors(INTRO_LOOK_FROM, tmpLook, t);
-      camera.lookAt(tmpTarget);
-    } else {
-      const t = 1 - Math.exp(-dt * 5.5);
-      camera.position.lerp(tmpCam, t);
-      camera.lookAt(tmpLook);
-    }
-  });
+  }, -1);
 
   return (
-    <group ref={group} position={[PLAYER_START.x, 0, PLAYER_START.z]}>
-      <group ref={body} name="body">
-        {/* outline shells (inverted hulls) for the main silhouette */}
-        <mesh position={[0, 1.02, 0]}>
-          <capsuleGeometry args={[0.295, 0.44, 6, 12]} />
-          <meshBasicMaterial color="#241a30" side={THREE.BackSide} />
-        </mesh>
-        <mesh position={[0, 1.66, 0]}>
-          <sphereGeometry args={[0.272, 18, 18]} />
-          <meshBasicMaterial color="#241a30" side={THREE.BackSide} />
-        </mesh>
-        {/* torso: UQ purple hoodie */}
-        <mesh position={[0, 1.02, 0]} castShadow>
-          <capsuleGeometry args={[0.26, 0.42, 6, 12]} />
-          <meshToonMaterial gradientMap={TOON} color="#6a3ba3" />
-        </mesh>
-        {/* hood bump */}
-        <mesh position={[0, 1.32, -0.14]} castShadow>
-          <sphereGeometry args={[0.16, 10, 10]} />
-          <meshToonMaterial gradientMap={TOON} color="#5b3190" />
-        </mesh>
-        {/* backpack: every student has one */}
-        <mesh position={[0, 1.08, -0.3]} castShadow>
-          <boxGeometry args={[0.34, 0.44, 0.18]} />
-          <meshToonMaterial gradientMap={TOON} color="#e0a33c" />
-        </mesh>
-        {/* head */}
-        <mesh position={[0, 1.66, 0]} castShadow>
-          <sphereGeometry args={[0.24, 18, 18]} />
-          <meshToonMaterial gradientMap={TOON} color="#f2c89b" />
-        </mesh>
-        {/* eyes */}
-        {[-0.085, 0.085].map((x) => (
-          <mesh key={x} position={[x, 1.69, 0.205]}>
-            <sphereGeometry args={[0.032, 8, 8]} />
-            <meshBasicMaterial color="#26211c" />
-          </mesh>
-        ))}
-        {/* hair */}
-        <mesh position={[0, 1.74, -0.02]}>
-          <sphereGeometry args={[0.245, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-          <meshToonMaterial gradientMap={TOON} color="#33241a" />
-        </mesh>
-        {/* UQ cap + brim */}
-        <mesh position={[0, 1.82, 0]}>
-          <sphereGeometry args={[0.235, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.4]} />
-          <meshToonMaterial gradientMap={TOON} color="#51247a" />
-        </mesh>
-        <mesh position={[0, 1.84, 0.19]} rotation-x={-0.12}>
-          <boxGeometry args={[0.3, 0.04, 0.24]} />
-          <meshToonMaterial gradientMap={TOON} color="#51247a" />
-        </mesh>
-        {/* arms */}
-        <group ref={armL} position={[-0.34, 1.28, 0]}>
-          <mesh position={[0, -0.26, 0]} castShadow>
-            <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshToonMaterial gradientMap={TOON} color="#5b3190" />
-          </mesh>
-        </group>
-        <group ref={armR} position={[0.34, 1.28, 0]}>
-          <mesh position={[0, -0.26, 0]} castShadow>
-            <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-            <meshToonMaterial gradientMap={TOON} color="#5b3190" />
-          </mesh>
-        </group>
+    <>
+      <PlayerVisibility enabledRef={occluded} playerRef={visual} />
+      <group ref={visual} position={[playerPos.x, playerMotion.worldY, playerPos.z]}>
+        <StudentAvatar speed={0} motionRef={motion} />
       </group>
-      {/* legs (each with an outline shell that swings with the group) */}
-      <group ref={legL} position={[-0.13, 0.62, 0]}>
-        <mesh position={[0, -0.28, 0]}>
-          <capsuleGeometry args={[0.125, 0.36, 4, 8]} />
-          <meshBasicMaterial color="#161c2e" side={THREE.BackSide} />
-        </mesh>
-        <mesh position={[0, -0.28, 0]} castShadow>
-          <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
-          <meshToonMaterial gradientMap={TOON} color="#26324f" />
-        </mesh>
-      </group>
-      <group ref={legR} position={[0.13, 0.62, 0]}>
-        <mesh position={[0, -0.28, 0]}>
-          <capsuleGeometry args={[0.125, 0.36, 4, 8]} />
-          <meshBasicMaterial color="#161c2e" side={THREE.BackSide} />
-        </mesh>
-        <mesh position={[0, -0.28, 0]} castShadow>
-          <capsuleGeometry args={[0.1, 0.34, 4, 8]} />
-          <meshToonMaterial gradientMap={TOON} color="#26324f" />
-        </mesh>
-      </group>
-      {/* soft blob shadow */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, 0]}>
-        <circleGeometry args={[0.5, 20]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0.34} depthWrite={false} />
-      </mesh>
-    </group>
+    </>
   );
 }

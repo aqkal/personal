@@ -1,56 +1,80 @@
 ---
-title: "How I built a walkable 3D Brisbane as my portfolio"
+title: "Building a 3D campus portfolio"
 date: "2026-07-07"
-description: "Why my resume is an explorable 3D night campus: Next.js, React Three Fiber, a typed content model, and one codebase that deploys to both Vercel and Cloudflare."
-tags: ["nextjs", "threejs", "react-three-fiber", "typescript"]
+updated: "2026-09-09"
+description: "How I built a Brisbane-inspired campus and a one-page portfolio around shared content, with careful asset loading, physics and camera movement."
+tags: ["Next.js", "Three.js", "TypeScript", "Game development"]
 draft: false
 ---
 
-Most portfolios are a scroll. I wanted mine to be a place.
+I built this portfolio around a place I know: the University of Queensland's St Lucia campus. Sandstone buildings, jacarandas and a riverfront became the setting for my work. Visitors can walk through it, stop at a project display, or take a scooter across campus. They can also open the [one-page portfolio](/?view=portfolio) or [résumé](/resume) and get straight to the details.
 
-So this site boots into a stylized 3D scene of a sunny Brisbane day, inspired by my actual campus: the University of Queensland's sandstone Great Court, jacarandas in full bloom, and the Brisbane river wrapping the whole thing with the city skyline across the water. You walk around as a small student character. My internships are office towers you approach, my projects are arcade cabinets (one of them is secretly playable), and my skills grow in a garden.
+Building both views raised a useful engineering problem: how could I make the world enjoyable to explore while keeping the information easy to find, accurate and maintainable?
 
-## The stack
+## A campus with a purpose
 
-- **Next.js 16** (App Router) with **TypeScript** and **Tailwind CSS v4**
-- **Three.js** via **React Three Fiber** for the world, flat-lit and instanced for speed
-- **Zod-validated content model**: one set of typed files feeds the 3D world, the classic HTML pages, and the resume
-- Deploys to **both Vercel and Cloudflare Workers** from the same codebase
+The world is a compact interpretation of the campus. The Great Court anchors the university precinct. Work experience has its own district, including a construction site for Qualia. Projects sit in an open gallery, and the skills garden gives visitors another way to discover the technical work behind them.
 
-## One source of truth
+The experience and project displays lead to the same information available in the portfolio. The map helps with orientation, while the Work menu provides direct access to destinations and their descriptions. Exploration is optional: a visitor looking for a particular project should be able to find it quickly.
 
-The core architectural decision: content lives in typed TypeScript files, and everything renders from them. Adding a job to my resume spawns a building in the world:
+Small details give the campus a sense of activity. There is a fountain in the central plaza, a ferry along the river, and optional music and environmental sound. These features support the setting, but the work remains the reason to visit.
 
-```ts
-export const experience: Experience[] = [
-  {
-    id: "dsr-branding",
-    company: "DSR Branding",
-    role: "Web Development Intern",
-    start: "2025-05",
-    end: null,
-    // ...highlights, tech
-    world: {
-      zone: "career",
-      dialog: ["DSR Branding - my current internship!"],
-    },
-  },
-];
+## Keeping the content in one place
+
+The site uses Next.js, React and TypeScript. Résumé content lives in typed files under `content/`, and Zod validates those records before the pages or world consume them.
+
+An experience entry contains the company, role, dates, highlights and technologies. It also carries the metadata used to connect it to a location in the game. Both interfaces import the validated content rather than maintaining separate copies of the same biography.
+
+For example, the current role shown in the portfolio comes from the experience records:
+
+```tsx
+import { experience } from "@content";
+
+const currentJob = experience.find((job) => job.end === null);
+
+export function CurrentRole() {
+  if (!currentJob) return null;
+
+  return (
+    <p>
+      {currentJob.role} at {currentJob.company}
+    </p>
+  );
+}
 ```
 
-The world layout maps each entry to an anchor point in its zone, gives it a door, an interaction radius, and a label. The classic `/experience` page maps the same array to cards. Nothing is duplicated, so nothing can drift out of sync.
+This makes a small edit, such as correcting a start date or updating the Qualia description, apply across the résumé, portfolio and campus. The buildings still have deliberately authored positions and entrances; sharing the content does not mean generating the entire layout from a list.
 
-## Keeping it smooth
+## Building and loading the world
 
-A portfolio that lags is a portfolio that gets closed. The rules I set:
+Three.js renders the scene through React Three Fiber. The campus combines authored Blender assets with procedural details, including the sky and water. Repeated objects use instancing, and compatible static geometry is merged to keep the number of draw calls down.
 
-- Three.js loads **only** after you choose Game mode; the landing page and classic pages ship zero game code
-- No shadow maps and no postprocessing passes: it is a bright day scene with two lights and blob shadows, the same trick playful WebGL games use to stay fast
-- Trees, clouds, grass, bridge steel, and skyline towers are **instanced** (a handful of draw calls for hundreds of objects)
-- Per-frame data lives in refs and module state, never in React state
-- A quality ladder watches the frame rate and steps down resolution before anything stutters
-- Software renderers (no GPU) are detected up front and get a floor-quality scene instead of a slideshow
+The portfolio portrait uses the same character asset as the game. It evaluates a wave pose once and renders on demand, so showing the character on the page does not require running the game's animation loop.
 
-## What's next
+The full playable world loads when Game mode is selected. A boarding pass covers the loading process and follows milestones including loading the world code, preparing the renderer and compiling shaders. The smaller landing preview and portrait load separately, so it would be inaccurate to describe the rest of the site as entirely free of Three.js.
 
-The landing screen offers a second interface: a spotlight one-page portfolio that reads from the same content model, so the office tower by the river and the experience row on the page always tell the same story. Next on the list: hand-made 3D models for the campus buildings and more easter eggs in the arcade.
+## Making vehicles feel steady
+
+Movement runs in a fixed 60 Hz Rapier physics simulation. Rendering can happen at a different rate, so the visible vehicles use interpolated poses between physics updates. The rider and camera need to follow those same poses.
+
+One of the more revealing bugs appeared during fast vehicle travel. The rider looked unstable when the follow camera was left alone, but moving the camera by hand made the effect less noticeable. The character was attached correctly; part of the problem was the camera's changing lag.
+
+The camera had been easing toward a moving position every frame. When frame durations varied, the distance it lagged behind the vehicle varied too. The fix was to carry the camera with the vehicle's presented movement, then ease only the remaining offset. Boarding still has a soft transition, while normal travel keeps consistent framing.
+
+The same principle applies to nearby visual effects. An occlusion marker should follow the rendered player, and a moving vehicle's shadow should not reuse an older pose simply because the shadow camera has stayed in the same place.
+
+## Spending frame time carefully
+
+The daytime scene uses one sun shadow map and a hemisphere light, without a postprocessing stack. Two quality levels adjust render resolution and shadow-map size. Per-frame movement lives in mutable state and refs rather than triggering React renders.
+
+Some improvements were small but measurable. A spatial grid lets point-collision checks examine nearby geometry instead of scanning every collider. The camera avoids repeating identical occupancy queries. Persistent interface panels use tinted surfaces without a live backdrop blur over the moving world.
+
+I also added regression checks for the less obvious failures: vehicle and rider alignment at different render rates, camera framing during uneven frames, braking, safe exits and navigation around obstacles. A high FPS reading alone would not catch a camera that makes the player appear to shake.
+
+## What the project taught me
+
+The most useful improvements came from connecting a visible problem to a specific part of the system. A clipped heading was a layout problem. A floating interaction marker was a mismatch between an asset and its interaction position. Vehicle jitter required looking at physics, presentation, the camera and shadows together.
+
+This portfolio is still evolving, but those boundaries make it easier to improve. The content has one home, the physics owns movement, and the presentation follows the resolved state. That leaves room to keep refining the campus without making the résumé harder to use.
+
+You can [explore the campus](/?view=game), [browse the projects](/?view=portfolio#projects), or [read the résumé](/resume).

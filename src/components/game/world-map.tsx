@@ -2,16 +2,24 @@
 
 import { useEffect, useRef } from "react";
 import {
-  ARCADE,
-  CABINETS,
+  BRIDGE,
+  LOOKOUT,
+  CAMPUS_CLOISTERS,
+  CAMPUS_LAKE,
   CAFE,
   CRYSTALS,
+  GARDEN,
   GREAT_COURT,
-  OFFICES,
   POST,
-  TREES,
+  PROJECT_POSITIONS,
+  WORLD_BOUNDS,
+  WORLD_PATHS,
 } from "@/game3d/layout";
-import { cameraOrbit, playerHeading, playerPos } from "@/game3d/state";
+import { AUTHORED_SOLIDS, AUTHORED_TREES, PROJECT_GALLERY } from "@/game3d/authored-layout";
+import { BUGGY_BAYS, BUGGY_ROADS, FERRY_DOCKS, SCOOTER_START } from "@/game3d/travel-layout";
+import { MAINLAND_OUTLINE } from "@/game3d/terrain";
+import { cameraOrbit, playerHeading, playerPos, runtime, travelState } from "@/game3d/state";
+import { navigation } from "@/game3d/navigation";
 
 /**
  * Top-down schematic of the world, shared by the corner minimap and the
@@ -20,13 +28,37 @@ import { cameraOrbit, playerHeading, playerPos } from "@/game3d/state";
  */
 
 // world window shown on the map
-const WX0 = -48;
-const WX1 = 48;
-const WZ0 = -42;
-const WZ1 = 66;
+const WX0 = WORLD_BOUNDS.minX - 4;
+const WX1 = WORLD_BOUNDS.maxX + 4;
+const WZ0 = WORLD_BOUNDS.minZ - 3;
+const WZ1 = WORLD_BOUNDS.maxZ + 3;
 export const MAP_ASPECT = (WZ1 - WZ0) / (WX1 - WX0);
 
-function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number) {
+const MAP_AREAS = [
+  { label: "Great Court", x: GREAT_COURT.center.x, z: GREAT_COURT.center.z, radius: 25 },
+  { label: "UQ Lakes", x: CAMPUS_LAKE.x, z: CAMPUS_LAKE.z, radius: 13 },
+  { label: "Duhig Library", x: -60, z: -10, radius: 11 },
+  { label: "Career District", x: 27, z: -28, radius: 20 },
+  { label: "Welcome Plaza", x: 0, z: 0, radius: 13 },
+  { label: "Blog Café", x: CAFE.x, z: CAFE.z, radius: 9 },
+  { label: "Post Office", x: POST.x, z: POST.z, radius: 8 },
+  { label: "Skills Garden", x: GARDEN.x, z: GARDEN.z, radius: 11 },
+  { label: "Project Gallery", x: (PROJECT_GALLERY.minX + PROJECT_GALLERY.maxX) / 2, z: (PROJECT_GALLERY.minZ + PROJECT_GALLERY.maxZ) / 2, radius: 12 },
+  { label: "River Bridge", x: 0, z: 56, radius: 22 },
+  { label: "City Lookout", x: 0, z: LOOKOUT.z, radius: 10 },
+] as const;
+
+const MAP_LABELS = [
+  MAP_AREAS[0],
+  MAP_AREAS[1],
+  MAP_AREAS[3],
+  MAP_AREAS[4],
+  MAP_AREAS[7],
+  MAP_AREAS[8],
+  MAP_AREAS[10],
+] as const;
+
+function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number, compact: boolean) {
   const sx = w / (WX1 - WX0);
   const sy = h / (WZ1 - WZ0);
   const X = (x: number) => (x - WX0) * sx;
@@ -34,44 +66,55 @@ function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const RW = (v: number) => v * sx;
   const RH = (v: number) => v * sy;
 
-  // ground, softly lit toward the plaza
-  ctx.fillStyle = "#3e7d47";
+  // Water surrounds the single rounded St Lucia island.
+  ctx.fillStyle = "#477a7d";
   ctx.fillRect(0, 0, w, h);
+  ctx.beginPath();
+  MAINLAND_OUTLINE.forEach((point, i) => {
+    if (!i) ctx.moveTo(X(point.x), Z(point.z)); else ctx.lineTo(X(point.x), Z(point.z));
+  });
+  ctx.closePath();
+  ctx.strokeStyle = "#8ab5a6";
+  ctx.lineWidth = Math.max(2, RW(1.4));
+  ctx.stroke();
+  ctx.fillStyle = "#6d8652";
+  ctx.fill();
+
+  // Softly light the island toward the plaza.
+  ctx.save();
+  ctx.clip();
   const glow = ctx.createRadialGradient(X(0), Z(0), 0, X(0), Z(0), w * 0.7);
   glow.addColorStop(0, "rgba(255,244,222,0.14)");
   glow.addColorStop(1, "rgba(255,244,222,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 
-  // river with a lighter shallows band along each shore
-  ctx.fillStyle = "#3d7fc0";
-  ctx.fillRect(0, Z(41), w, h - Z(41)); // south
-  ctx.fillRect(X(44), 0, w - X(44), h); // east
-  ctx.fillRect(0, Z(0), X(-44), h - Z(0)); // west reach
-  ctx.fillStyle = "#6cb4de";
-  ctx.fillRect(0, Z(41), w, Math.max(1.5, RH(1.4)));
-  ctx.fillRect(X(44), 0, Math.max(1.5, RW(1.4)), h);
-  ctx.fillRect(X(-44) - Math.max(1.5, RW(1.4)), Z(0), Math.max(1.5, RW(1.4)), h - Z(0));
-
-  // roads with soft edges
+  // The same path footprints feed the 3D paving and cartography.
   ctx.fillStyle = "#c6bca9";
-  ctx.fillRect(X(-1.8), Z(-42), RW(3.6), RH(84)); // NS
-  ctx.fillRect(X(-42), Z(-1.8), RW(84), RH(3.6)); // EW
-  for (const px of [-27, 27]) {
-    ctx.fillRect(X(px - 1.5), Z(-18), RW(3), RH(16));
-    ctx.fillRect(X(px - 1.5), Z(4), RW(3), RH(16));
+  ctx.strokeStyle = "rgba(30,45,30,0.2)";
+  ctx.lineWidth = 0.6;
+  for (const path of WORLD_PATHS) {
+    ctx.fillRect(X(path.x - path.w / 2), Z(path.z - path.d / 2), RW(path.w), RH(path.d));
+    ctx.strokeRect(X(path.x - path.w / 2), Z(path.z - path.d / 2), RW(path.w), RH(path.d));
   }
-  ctx.strokeStyle = "rgba(30,45,30,0.25)";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(X(-1.8), Z(-42), RW(3.6), RH(84));
-  ctx.strokeRect(X(-42), Z(-1.8), RW(84), RH(3.6));
+  // The road loop and branches come from the same contract as buggy physics.
+  ctx.fillStyle = "#a79d8b";
+  for (const road of BUGGY_ROADS) {
+    ctx.fillRect(X(road.x - road.w / 2), Z(road.z - road.d / 2), RW(road.w), RH(road.d));
+  }
   // bridge + lookout
   ctx.fillStyle = "#c6bca9";
-  ctx.fillRect(X(-2.3), Z(42), RW(4.6), RH(16));
+  ctx.fillRect(X(-2.3), Z(BRIDGE.from), RW(4.6), RH(BRIDGE.to - BRIDGE.from));
   ctx.beginPath();
-  ctx.arc(X(0), Z(58.5), RW(7), 0, Math.PI * 2);
+  ctx.ellipse(X(0), Z(LOOKOUT.z), RW(LOOKOUT.r), RH(LOOKOUT.r), 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  // The two boarding jetties mirror the raised walkable surfaces.
+  ctx.fillRect(X(-15.6), Z(39), RW(3.2), RH(7.5));
+  ctx.fillRect(X(-17.5), Z(45.3), RW(7), RH(2.4));
+  ctx.fillRect(X(-14.2), Z(82.9), RW(11.2), RH(2.2));
+  ctx.fillRect(X(-14.2), Z(81), RW(2.4), RH(6));
 
   // plaza
   ctx.fillStyle = "#c6bca9";
@@ -84,72 +127,186 @@ function drawBase(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.arc(X(0), Z(0), RW(2.4), 0, Math.PI * 2);
   ctx.fill();
 
-  // trees (tiny dots)
-  for (const t of TREES) {
-    ctx.fillStyle = t.kind === "jacaranda" ? "#9d7ce0" : "#2c6e3c";
+  // Authored tree trunks are the source of truth for scenery and collisions.
+  for (const [x, z] of AUTHORED_TREES) {
+    ctx.fillStyle = "#47734d";
     ctx.beginPath();
-    ctx.arc(X(t.x), Z(t.z), Math.max(1.2, RW(0.9)), 0, Math.PI * 2);
+    ctx.arc(X(x), Z(z), Math.max(1.2, RW(0.9)), 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Great Court (sandstone ring)
-  ctx.fillStyle = "#d3bc8d";
-  const wings = [
-    GREAT_COURT.northWing,
-    GREAT_COURT.westWing,
-    GREAT_COURT.eastWing,
-    GREAT_COURT.southWest,
-    GREAT_COURT.southEast,
-  ];
-  for (const wg of wings) {
-    ctx.fillRect(X(wg.x - wg.hw), Z(wg.z - wg.hd), RW(wg.hw * 2), RH(wg.hd * 2));
+  // Ground-level authored building masses. Small arch and roof colliders stay off the map.
+  const architecture = AUTHORED_SOLIDS.filter((solid) =>
+    solid.type === "box" && solid.baseY <= 2.1 && solid.height >= 4 &&
+    (solid.half?.[0] ?? 0) * (solid.half?.[1] ?? 0) >= 3,
+  );
+  for (const solid of architecture) {
+    const half = solid.half!;
+    const heritage = /Court|Forgan|Duhig/.test(solid.id);
+    ctx.save(); ctx.translate(X(solid.center[0]), Z(solid.center[1])); ctx.rotate(-solid.rotation);
+    ctx.fillStyle = heritage ? "#d6c3a3" : "#b7b7aa";
+    ctx.fillRect(-RW(half[0]), -RH(half[1]), RW(half[0] * 2), RH(half[1] * 2));
+    ctx.strokeStyle = heritage ? "#8b7964" : "#706653"; ctx.lineWidth = 0.7;
+    ctx.strokeRect(-RW(half[0]), -RH(half[1]), RW(half[0] * 2), RH(half[1] * 2));
+    ctx.restore();
   }
-  ctx.strokeStyle = "rgba(96,72,38,0.55)";
-  ctx.lineWidth = 1;
-  for (const wg of wings) {
-    ctx.strokeRect(X(wg.x - wg.hw), Z(wg.z - wg.hd), RW(wg.hw * 2), RH(wg.hd * 2));
-  }
-  ctx.fillStyle = "#f2e3bb";
-  ctx.fillRect(X(GREAT_COURT.tower.x - 1.2), Z(GREAT_COURT.tower.z - 1.2), RW(2.4), RH(2.4));
+  ctx.strokeStyle = "#e1ccaa"; ctx.lineWidth = Math.max(2, RW(2.6));
+  ctx.beginPath();
+  CAMPUS_CLOISTERS.forEach((c, i) => { if (!i) ctx.moveTo(X(c.x), Z(c.z)); else ctx.lineTo(X(c.x), Z(c.z)); }); ctx.stroke();
+  ctx.fillStyle = "#497e83";
+  ctx.beginPath(); ctx.ellipse(X(CAMPUS_LAKE.x), Z(CAMPUS_LAKE.z), RW(CAMPUS_LAKE.rx), RH(CAMPUS_LAKE.rz), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#cfbf9b"; ctx.lineWidth = Math.max(1, RW(1.2));
+  ctx.beginPath(); ctx.ellipse(X(CAMPUS_LAKE.x), Z(CAMPUS_LAKE.z), RW(12.5), RH(10), 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = "#e0d4b9"; ctx.fillRect(X(-2), Z(-44), RW(10), RH(5));
 
-  // career towers
-  for (const [i, o] of OFFICES.entries()) {
-    ctx.fillStyle = "#1b2438";
-    ctx.strokeStyle = o.accent;
-    ctx.lineWidth = Math.max(1, RW(0.5));
-    ctx.fillRect(X(o.x - o.w / 2), Z(o.z - o.d / 2), RW(o.w), RH(o.d));
-    ctx.strokeRect(X(o.x - o.w / 2), Z(o.z - o.d / 2), RW(o.w), RH(o.d));
-    void i;
-  }
+  // A single footprint keeps the open gallery readable among its five displays.
+  ctx.fillStyle = "rgba(246,239,223,0.82)";
+  ctx.strokeStyle = "#8a6110";
+  ctx.lineWidth = compact ? 0.8 : 1.2;
+  ctx.fillRect(X(PROJECT_GALLERY.minX), Z(PROJECT_GALLERY.minZ), RW(PROJECT_GALLERY.maxX - PROJECT_GALLERY.minX), RH(PROJECT_GALLERY.maxZ - PROJECT_GALLERY.minZ));
+  ctx.strokeRect(X(PROJECT_GALLERY.minX), Z(PROJECT_GALLERY.minZ), RW(PROJECT_GALLERY.maxX - PROJECT_GALLERY.minX), RH(PROJECT_GALLERY.maxZ - PROJECT_GALLERY.minZ));
 
-  // café + post office
-  ctx.strokeStyle = "rgba(0,0,0,0.35)";
-  ctx.lineWidth = 1;
-  ctx.fillStyle = "#8a6248";
-  ctx.fillRect(X(CAFE.x - CAFE.w / 2), Z(CAFE.z - CAFE.d / 2), RW(CAFE.w), RH(CAFE.d));
-  ctx.strokeRect(X(CAFE.x - CAFE.w / 2), Z(CAFE.z - CAFE.d / 2), RW(CAFE.w), RH(CAFE.d));
-  ctx.fillStyle = "#5a6a8f";
-  ctx.fillRect(X(POST.x - POST.w / 2), Z(POST.z - POST.d / 2), RW(POST.w), RH(POST.d));
-  ctx.strokeRect(X(POST.x - POST.w / 2), Z(POST.z - POST.d / 2), RW(POST.w), RH(POST.d));
-
-  // arcade
-  ctx.fillStyle = "#1c2138";
-  ctx.strokeStyle = "#ff6bd6";
-  ctx.lineWidth = Math.max(1, RW(0.5));
-  ctx.fillRect(X(ARCADE.x - ARCADE.hw), Z(ARCADE.z - ARCADE.hd), RW(ARCADE.hw * 2), RH(ARCADE.hd * 2));
-  ctx.strokeRect(X(ARCADE.x - ARCADE.hw), Z(ARCADE.z - ARCADE.hd), RW(ARCADE.hw * 2), RH(ARCADE.hd * 2));
-  for (const c of CABINETS) {
-    ctx.fillStyle = c.accent;
-    ctx.fillRect(X(c.x - 0.6), Z(c.z - 0.6), Math.max(2, RW(1.2)), Math.max(2, RH(1.2)));
-  }
-
-  // skill crystals
-  for (const c of CRYSTALS) {
-    ctx.fillStyle = c.accent;
+  // Project description stops share the Engineering frontage.
+  for (const project of PROJECT_POSITIONS) {
+    ctx.fillStyle = "#8a6110";
     ctx.beginPath();
-    ctx.arc(X(c.x), Z(c.z), Math.max(1.6, RW(0.9)), 0, Math.PI * 2);
+    ctx.arc(X(project.x), Z(project.z), Math.max(1.8, RW(.8)), 0, Math.PI * 2);
     ctx.fill();
   }
+  // Skills Garden stations use their category accent and remain distinct from buildings.
+  for (const station of CRYSTALS) {
+    const x = X(station.x);
+    const z = Z(station.z);
+    const r = Math.max(2.2, RW(.95));
+    ctx.save();
+    ctx.translate(x, z);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = station.accent;
+    ctx.fillRect(-r, -r, r * 2, r * 2);
+    ctx.strokeStyle = "rgba(54,47,37,0.7)";
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(-r, -r, r * 2, r * 2);
+    ctx.restore();
+  }
+  // Ferry boarding anchors are shown without creating direct-travel shortcuts.
+  for (const dock of FERRY_DOCKS) {
+    ctx.fillStyle = "#f6df9c";
+    ctx.strokeStyle = "#72571e";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(X(dock.x), Z(dock.z), Math.max(1.6, RW(.75)), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Buggy bays are transport pickup points rather than destination stops.
+  for (const bay of BUGGY_BAYS) {
+    const r = compact ? 2 : 3.2;
+    ctx.fillStyle = "#415866";
+    ctx.fillRect(X(bay.x) - r, Z(bay.z) - r, r * 2, r * 2);
+  }
+  ctx.fillStyle = "#47734d";
+  ctx.strokeStyle = "#f7efdd";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.arc(X(SCOOTER_START.x), Z(SCOOTER_START.z), compact ? 2.2 : 3.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  if (!compact) {
+    ctx.font = "600 9px ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (const area of MAP_LABELS) {
+      const x = X(area.x);
+      const z = Z(area.z);
+      const width = ctx.measureText(area.label).width + 10;
+      ctx.fillStyle = "rgba(251,246,233,0.88)";
+      ctx.fillRect(x - width / 2, z - 7, width, 14);
+      ctx.fillStyle = "#51483a";
+      ctx.fillText(area.label, x, z);
+    }
+  }
+}
+
+function mapPoint(x: number, z: number, w: number, h: number) {
+  return {
+    x: (x - WX0) / (WX1 - WX0) * w,
+    y: (z - WZ0) / (WZ1 - WZ0) * h,
+  };
+}
+
+function drawDestination(ctx: CanvasRenderingContext2D, w: number, h: number, t: number, compact: boolean) {
+  const destination = navigation.destination;
+  if (!destination) return;
+  const point = mapPoint(destination.x, destination.z, w, h);
+  const pulse = runtime.reducedMotion ? 0.35 : (t % 1.4) / 1.4;
+  const radius = compact ? 4 : 6;
+  ctx.save();
+  ctx.translate(point.x, point.y);
+  ctx.strokeStyle = `rgba(138,97,16,${0.8 * (1 - pulse)})`;
+  ctx.lineWidth = compact ? 1.2 : 1.8;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + pulse * radius * 1.5, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = navigation.arrived ? "#47734d" : "#d49a2a";
+  ctx.strokeStyle = "#fffaf0";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTransport(ctx: CanvasRenderingContext2D, w: number, h: number, compact: boolean) {
+  const buggy = mapPoint(travelState.buggy.x, travelState.buggy.z, w, h);
+  const ferry = mapPoint(travelState.ferry.x, travelState.ferry.z, w, h);
+  const scooter = mapPoint(travelState.scooter.x, travelState.scooter.z, w, h);
+  const size = compact ? 2.8 : 4.2;
+
+  ctx.save();
+  ctx.translate(buggy.x, buggy.y);
+  ctx.rotate(-travelState.buggy.heading);
+  if (travelState.mode === "driving") {
+    ctx.strokeStyle = "#fffaf0";
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(-size - 1, -size * 0.65 - 1, size * 2 + 2, size * 1.3 + 2);
+  }
+  ctx.fillStyle = "#263d49";
+  ctx.fillRect(-size, -size * 0.65, size * 2, size * 1.3);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(ferry.x, ferry.y);
+  ctx.rotate(-travelState.ferry.heading);
+  ctx.fillStyle = "#f4cf71";
+  ctx.strokeStyle = travelState.mode === "ferry" ? "#fffaf0" : "#72571e";
+  ctx.lineWidth = travelState.mode === "ferry" ? 2.5 : 1;
+  ctx.beginPath();
+  ctx.moveTo(0, size * 1.4);
+  ctx.lineTo(-size, -size);
+  ctx.lineTo(size, -size);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(scooter.x, scooter.y);
+  ctx.rotate(-travelState.scooter.heading);
+  ctx.fillStyle = "#3d7a53";
+  ctx.strokeStyle = travelState.mode === "scooter" ? "#fffaf0" : "#24442f";
+  ctx.lineWidth = travelState.mode === "scooter" ? 2.5 : 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, -size * 1.7);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawPlayer(
@@ -171,8 +328,8 @@ function drawPlayer(
   const look = Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
   const coneR = Math.max(20, w * 0.16);
   const cone = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, coneR);
-  cone.addColorStop(0, "rgba(78,240,138,0.3)");
-  cone.addColorStop(1, "rgba(78,240,138,0)");
+  cone.addColorStop(0, "rgba(167,139,250,0.3)");
+  cone.addColorStop(1, "rgba(167,139,250,0)");
   ctx.fillStyle = cone;
   ctx.beginPath();
   ctx.moveTo(0, 0);
@@ -181,8 +338,8 @@ function drawPlayer(
   ctx.fill();
 
   // expanding locator pulse
-  const pulse = (t % 1.6) / 1.6;
-  ctx.strokeStyle = `rgba(78,240,138,${0.5 * (1 - pulse)})`;
+  const pulse = runtime.reducedMotion ? 0.3 : (t % 1.6) / 1.6;
+  ctx.strokeStyle = `rgba(167,139,250,${0.5 * (1 - pulse)})`;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(0, 0, r * (1.2 + pulse * 1.8), 0, Math.PI * 2);
@@ -191,8 +348,8 @@ function drawPlayer(
   // facing wedge; heading = atan2(vx, vz) and map y equals world z,
   // so screen rotation is the NEGATED heading (rotate(a) mirrors east/west)
   ctx.rotate(-playerHeading.value);
-  ctx.fillStyle = "#4ef08a";
-  ctx.shadowColor = "#4ef08a";
+  ctx.fillStyle = "#a78bfa";
+  ctx.shadowColor = "#a78bfa";
   ctx.shadowBlur = 8;
   ctx.beginPath();
   ctx.moveTo(0, r * 1.5);
@@ -208,7 +365,7 @@ function drawPlayer(
   ctx.restore();
 }
 
-function useMapCanvas(size: number) {
+export function useMapCanvas(size: number, compact = false) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -226,139 +383,52 @@ function useMapCanvas(size: number) {
     base.height = h * dpr;
     const bctx = base.getContext("2d")!;
     bctx.scale(dpr, dpr);
-    drawBase(bctx, w, h);
+    drawBase(bctx, w, h, compact);
 
     let raf = 0;
-    let skip = false;
-    const loop = () => {
+    let last = 0;
+    const loop = (time: number) => {
       raf = requestAnimationFrame(loop);
-      // half-rate redraw is plenty for a map and halves its main-thread cost
-      skip = !skip;
-      if (skip) return;
+      if (time - last < 50 || document.hidden) return;
+      last = time;
       ctx.clearRect(0, 0, w, h);
       ctx.drawImage(base, 0, 0, w, h);
-      drawPlayer(ctx, w, h, performance.now() / 1000);
+      if (navigation.points.length && !navigation.arrived) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(64,48,22,0.55)";
+        ctx.lineWidth = compact ? 3.5 : 5;
+        const route = [playerPos, ...navigation.points.slice(navigation.index)];
+        route.forEach((p, i) => {
+          const point = mapPoint(p.x, p.z, w, h);
+          if (!i) ctx.moveTo(point.x, point.y); else ctx.lineTo(point.x, point.y);
+        });
+        ctx.stroke();
+        ctx.strokeStyle = "#ffe3a3";
+        ctx.lineWidth = compact ? 1.6 : 2.4;
+        ctx.setLineDash(compact ? [3, 2] : [5, 4]);
+        ctx.stroke();
+        ctx.restore();
+      }
+      drawDestination(ctx, w, h, time / 1000, compact);
+      drawTransport(ctx, w, h, compact);
+      drawPlayer(ctx, w, h, time / 1000);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [size]);
+  }, [size, compact]);
   return canvasRef;
 }
 
 export function Minimap({ onExpand }: { onExpand: () => void }) {
-  const ref = useMapCanvas(132);
+  const width = 132;
+  const ref = useMapCanvas(width, true);
   return (
-    <button
-      type="button"
-      onClick={onExpand}
-      title="Open map (M)"
-      className="group absolute left-3 top-14 z-30 overflow-hidden rounded-xl border border-line/80 bg-black/55 p-1 shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-all hover:border-neon/60 hover:shadow-[0_10px_32px_rgba(78,240,138,0.18)]"
-    >
-      <canvas
-        ref={ref}
-        className="rounded-lg"
-        style={{ width: 132, height: Math.round(132 * MAP_ASPECT) }}
-      />
-      <span className="pointer-events-none absolute bottom-1.5 right-1.5 rounded bg-black/60 px-1 py-0.5 font-pixel text-[7px] text-muted transition-colors group-hover:text-neon">
-        M · MAP
+    <button type="button" onClick={onExpand} aria-label="Open campus map and destinations" title="Open map (M)" className="campus-minimap game-glass block w-[92px] overflow-hidden md:w-[148px]">
+      <span className="campus-minimap-canvas block">
+        <canvas ref={ref} aria-hidden style={{ width, height: Math.round(width * MAP_ASPECT) }} className="block" />
       </span>
-      <span className="pointer-events-none absolute left-1.5 top-1.5 rounded bg-black/60 px-1 py-0.5 font-pixel text-[7px] text-ink/80">
-        N ↑
-      </span>
+      <span className="campus-minimap-footer flex"><span aria-hidden>N ↑</span><span>Map <kbd>M</kbd></span></span>
     </button>
-  );
-}
-
-const LEGEND = [
-  { color: "#d3bc8d", label: "UQ Campus (education)" },
-  { color: "#53d8ff", label: "Career District (experience)" },
-  { color: "#ff6bd6", label: "Project Arcade (projects)" },
-  { color: "#4ef08a", label: "Skills Garden" },
-  { color: "#8a6248", label: "Blog Café" },
-  { color: "#5a6a8f", label: "Post Office" },
-  { color: "#14335c", label: "Brisbane River + lookout" },
-];
-
-const MAP_LABELS = [
-  { x: -27, z: -24, label: "UQ CAMPUS" },
-  { x: 27, z: -20, label: "CAREER" },
-  { x: -27, z: 22, label: "GARDEN" },
-  { x: 27, z: 22, label: "ARCADE" },
-  { x: -35, z: 4, label: "CAFÉ" },
-  { x: 35, z: 4, label: "POST" },
-  { x: 0, z: 58, label: "LOOKOUT" },
-];
-
-export function MapOverlay({ onClose }: { onClose: () => void }) {
-  const size = Math.min(
-    440,
-    typeof window !== "undefined" ? window.innerWidth - 80 : 440,
-  );
-  const ref = useMapCanvas(size);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" || e.key === "m" || e.key === "M") {
-        e.preventDefault();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label="World map"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="flex max-h-full flex-col items-center gap-4 overflow-y-auto rounded-xl border-2 border-neon/40 bg-[#0b1120f5] p-5 sm:flex-row sm:items-start">
-        <div className="relative shrink-0">
-          <canvas
-            ref={ref}
-            style={{ width: size, height: Math.round(size * MAP_ASPECT) }}
-            className="rounded border border-line"
-          />
-          {MAP_LABELS.map((l) => (
-            <span
-              key={l.label}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded bg-black/65 px-1.5 py-0.5 font-pixel text-[8px] text-ink/90"
-              style={{
-                left: `${((l.x + 48) / 96) * 100}%`,
-                top: `${((l.z + 42) / 108) * 100}%`,
-              }}
-            >
-              {l.label}
-            </span>
-          ))}
-        </div>
-        <div className="min-w-[190px]">
-          <h2 className="font-pixel text-[10px] text-neon">CAMPUS MAP</h2>
-          <ul className="mt-3 space-y-2">
-            {LEGEND.map((item) => (
-              <li key={item.label} className="flex items-center gap-2 text-xs text-muted">
-                <span
-                  className="inline-block size-3 rounded-sm border border-black/40"
-                  style={{ background: item.color }}
-                />
-                {item.label}
-              </li>
-            ))}
-            <li className="flex items-center gap-2 text-xs text-neon">
-              <span className="inline-block size-3 rotate-45 rounded-sm bg-neon" />
-              You are here
-            </li>
-          </ul>
-          <p className="mt-4 font-pixel text-[8px] leading-relaxed text-muted">
-            M / ESC · CLOSE
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }

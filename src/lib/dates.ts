@@ -13,9 +13,10 @@ const MONTHS = [
   "Dec",
 ];
 
-/** "2025-05" -> "May 2025" */
+/** "2025-05" -> "May 2025"; "2026" -> "2026" without inventing a month. */
 export function formatYearMonth(ym: string): string {
   const [year, month] = ym.split("-");
+  if (!month) return year;
   return `${MONTHS[Number(month) - 1]} ${year}`;
 }
 

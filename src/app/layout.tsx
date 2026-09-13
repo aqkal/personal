@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Press_Start_2P, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Inter, Press_Start_2P } from "next/font/google";
 import Script from "next/script";
 import { profile } from "@content";
 import {
@@ -23,9 +23,9 @@ const pressStart = Press_Start_2P({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-bricolage",
   display: "swap",
 });
 
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070b14",
+  themeColor: "#faf7f0",
   width: "device-width",
   initialScale: 1,
 };
@@ -72,9 +72,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${pressStart.variable} ${spaceGrotesk.variable}`}
+      suppressHydrationWarning
+      className={`${inter.variable} ${pressStart.variable} ${bricolage.variable}`}
     >
       <body className="antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){var t="light";try{var s=localStorage.getItem("theme");if(s==="light"||s==="dark")t=s}catch(e){}document.documentElement.dataset.theme=t})()',
+          }}
+        />
         {children}
         <script
           type="application/ld+json"

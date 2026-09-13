@@ -7,14 +7,44 @@ import type { Experience } from "./schemas";
  */
 export const experience: Experience[] = [
   {
+    id: "qualia",
+    company: "Qualia",
+    role: "Co-Founder",
+    location: "Brisbane",
+    start: "2026-04",
+    end: null,
+    summary:
+      "Co-founded Qualia, an AI learning platform with course-grounded tutoring, Guided, Chat and Reading workflows, and support for student and instructor roles.",
+    highlights: [
+      "Built and shipped a full-stack AI learning platform using Next.js, React, TypeScript, Supabase and PostgreSQL/pgvector.",
+      "Developed Guided, Chat and Reading workflows that support learning and capture student reasoning.",
+      "Built a hybrid RAG pipeline combining semantic search and keyword retrieval to ground tutoring in instructor-uploaded course materials.",
+      "Built multi-user course infrastructure supporting student and instructor roles.",
+      "Implemented security safeguards, automated testing and AI evaluations to improve platform reliability.",
+    ],
+    tech: ["Next.js", "React", "TypeScript", "Supabase", "PostgreSQL", "pgvector", "Playwright"],
+    blurb:
+      "building an AI learning platform with course-grounded tutoring and tools for students and instructors",
+    links: { live: "https://www.qualia-ai.net/" },
+    world: {
+      zone: "career",
+      // routes this entry to the build site instead of a finished tower
+      sprite: "construction",
+      dialog: [
+        "I co-founded Qualia and lead engineering across its AI tutoring, course infrastructure and production systems.",
+        "Guided, Chat and Reading workflows ground learning in course materials and make student reasoning visible to instructors.",
+      ],
+    },
+  },
+  {
     id: "dsr-branding",
     company: "DSR Branding",
     role: "Web Development Intern",
     location: "Brisbane",
-    start: "2025-05",
-    end: null,
+    start: "2026-05",
+    end: "2026-08",
     summary:
-      "Building and shipping responsive, production-ready client websites with custom WordPress themes built from the ground up.",
+      "Built and shipped responsive, production-ready client websites with custom WordPress themes built from the ground up.",
     highlights: [
       "Designed and developed responsive client websites using modern web technologies, ensuring cross-device compatibility.",
       "Built and customized website layouts, pages, and user interfaces to meet client requirements.",
@@ -27,8 +57,8 @@ export const experience: Experience[] = [
       zone: "career",
       sprite: "office",
       dialog: [
-        "DSR Branding - my current internship!",
-        "Inside, I craft custom WordPress themes and pixel-perfect client sites.",
+        "DSR Branding, where I shipped client sites through the winter.",
+        "Inside, I built custom WordPress themes and pixel-perfect client sites.",
       ],
     },
   },

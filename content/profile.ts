@@ -9,7 +9,7 @@ export const profile: Profile = {
   // TODO: your full display name
   name: "Your Name",
   tagline:
-    "Software Engineering student at UQ - I build web experiences that feel alive.",
+    "Computer Engineering student at UQ and co-founder of Qualia. I build AI learning tools that help students work through their course material.",
   location: "Brisbane, Australia",
   email: "abdulq0702@gmail.com",
   socials: {
@@ -22,7 +22,6 @@ export const profile: Profile = {
     "Maintains a 25% scholarship, every semester",
     "Shipped code with a 20-developer team before graduating",
     "Taught a computer to spot barnacles on ship hulls",
-    "Built this site three times: pixels, night, then daylight",
     "Based in Brisbane, jacaranda season enjoyer",
     "Speaks TypeScript, Java, Python, and Haskell (yes, Haskell)",
   ],

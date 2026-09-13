@@ -1,5 +1,6 @@
 import { profile } from "@content";
 import { getAllPosts } from "@/lib/blog";
+import { siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-static";
 
@@ -12,18 +13,23 @@ function escapeXml(s: string): string {
 }
 
 export function GET() {
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const posts = getAllPosts().filter((p) => !p.meta.draft);
 
   const items = posts
     .map(
-      (p) => `    <item>
+      (p) => {
+        const url = `${siteUrl}/blog/${p.slug}`;
+        const pubDate = new Date(`${p.meta.date}T00:00:00Z`);
+        const published = Number.isNaN(pubDate.getTime())
+          ? ""
+          : `\n      <pubDate>${pubDate.toUTCString()}</pubDate>`;
+        return `    <item>
       <title>${escapeXml(p.meta.title)}</title>
-      <link>${site}/blog/${p.slug}</link>
-      <guid>${site}/blog/${p.slug}</guid>
-      <pubDate>${new Date(p.meta.date).toUTCString()}</pubDate>
+      <link>${escapeXml(url)}</link>
+      <guid isPermaLink="true">${escapeXml(url)}</guid>${published}
       <description>${escapeXml(p.meta.description)}</description>
-    </item>`,
+    </item>`;
+      },
     )
     .join("\n");
 
@@ -31,8 +37,8 @@ export function GET() {
 <rss version="2.0">
   <channel>
     <title>${escapeXml(profile.name)} · Blog</title>
-    <link>${site}/blog</link>
-    <description>Build logs and software engineering write-ups</description>
+    <link>${escapeXml(`${siteUrl}/blog`)}</link>
+    <description>${escapeXml("Build logs and software engineering write-ups")}</description>
     <language>en</language>
 ${items}
   </channel>

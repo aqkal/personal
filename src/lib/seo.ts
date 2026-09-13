@@ -1,7 +1,22 @@
-import { profile } from "@content";
+import { education, profile } from "@content";
 
-export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const FALLBACK_SITE_URL = "http://localhost:3000";
+
+function normalizeSiteUrl(value: string | undefined): string {
+  try {
+    const url = new URL(value || FALLBACK_SITE_URL);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return FALLBACK_SITE_URL;
+    }
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return FALLBACK_SITE_URL;
+  }
+}
+
+export const siteUrl = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 /** JSON-LD structured data: who this site is about. */
 export function personJsonLd() {
@@ -12,10 +27,10 @@ export function personJsonLd() {
     email: `mailto:${profile.email}`,
     url: siteUrl,
     sameAs: [profile.socials.github, profile.socials.linkedin],
-    jobTitle: "Software Engineering Student",
+    jobTitle: `${education[0].degree.split(":").pop()?.trim()} Student`,
     affiliation: {
       "@type": "CollegeOrUniversity",
-      name: "University of Queensland",
+      name: education[0].institution,
     },
     address: {
       "@type": "PostalAddress",

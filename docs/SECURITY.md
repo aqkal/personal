@@ -25,14 +25,30 @@ Consequence of the CSP: the site can never fetch from a CDN at runtime. Fonts ar
 
 Layered defenses, in order:
 
-1. **Size guard**: bodies over 32KB rejected before parsing.
+1. **Size guard**: bodies over 32,000 bytes rejected before parsing, including chunked requests without a trustworthy Content-Length. Reading stops at the limit.
 2. **Zod validation**: strict types and length caps (name 100, email 200, message 5000).
 3. **Honeypot**: a visually hidden `website` field. If filled, the API returns a fake success and discards the message, teaching bots nothing.
-4. **Cloudflare Turnstile**: token verified server-side (`siteverify`) with the visitor IP. Fails closed when a secret is configured.
-5. **Header injection**: impossible by construction. From/to/subject are fixed server values; user text is newline-stripped and only appears in the body and `reply_to` (validated as an email by Zod).
-6. **Generic errors**: responses never reveal which layer rejected a submission or whether email delivery is configured.
+4. **Cloudflare Turnstile**: token verified server-side (`siteverify`) with the visitor IP. Fails closed in production whether or not a secret is configured: a missing `TURNSTILE_SECRET_KEY` used to skip verification entirely, so a deploy that lost the variable silently dropped the captcha while still sending real mail. Only local development treats the captcha as optional.
+5. **Header injection**: sender and recipient are server-controlled; the recipient and reply-to address are validated as emails. The name included in the subject is newline-stripped and length-limited.
+6. **Controlled errors**: responses explain validation, captcha, or delivery failure without revealing secrets, stack traces, or upstream provider responses.
+
+Upstream verification and delivery each have a 10-second deadline. Verification
+includes consuming the response JSON, and rejects non-success HTTP statuses.
+The browser allows 30 seconds for the two sequential calls and keeps the
+visitor's message on failure. Production builds without a public captcha key
+offer a direct email link instead of a form that cannot submit successfully.
 
 There is no database; messages exist only in transit and in the destination inbox.
+
+## Links in content
+
+Every URL in `content/*.ts` is rendered straight into an `href`. Zod's `z.url()`
+accepts anything the URL constructor parses, which includes `javascript:`,
+`data:` and `vbscript:`, so the schemas use an `httpUrl` type that additionally
+requires an http(s) scheme. Content is repo-authored, so this is defense in
+depth rather than a live hole, but the schema is the cheapest place to keep the
+guarantee. Outbound `target="_blank"` links all carry `rel="noreferrer
+noopener"`.
 
 ## Secrets
 
@@ -44,11 +60,11 @@ There is no database; messages exist only in transit and in the destination inbo
 
 - `package-lock.json` is committed; CI installs with `npm ci`.
 - Dependabot (`.github/dependabot.yml`) opens weekly update PRs.
-- `npm audit` runs in CI (non-blocking report; act on high/critical).
+- `npm audit --audit-level=high` runs in CI and blocks high/critical findings.
 - No postinstall-heavy or unmaintained packages; dependency count is kept deliberately small.
 
 ## Privacy
 
 - Cloudflare Web Analytics is cookieless and anonymous: no consent banner required.
 - No tracking pixels, no fingerprinting, no third-party embeds.
-- The game stores exactly two localStorage keys: `interface` (chosen mode) and `snake-best` (high score). Both are cosmetic and never leave the browser.
+- The site stores five localStorage keys: `interface` (chosen mode), `theme`, `snake-best` (high score), `campus-passport-v1` (visited map stops), and `campus-audio-mix-v1` (audio levels). They are local preferences and progress only, and never leave the browser.

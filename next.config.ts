@@ -9,13 +9,14 @@ const isProd = process.env.NODE_ENV === "production";
  * - challenges.cloudflare.com: Cloudflare Turnstile (contact form captcha).
  * - static.cloudflareinsights.com / cloudflareinsights.com: privacy-friendly,
  *   cookieless Cloudflare Web Analytics beacon.
- * - data:/blob: img + worker sources are required by the Phaser game engine
- *   for runtime-generated textures.
+ * - data:/blob: img sources are required by the three.js world, which builds
+ *   every texture at runtime on a canvas rather than fetching image files.
+ *   (This said "Phaser" until the engine changed underneath it.)
  * - CSP is production-only: dev needs 'unsafe-eval' for HMR/react-refresh.
  */
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
@@ -45,11 +46,21 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Unset everywhere except local profiling, where it lets a production build
+  // run beside a live dev server instead of fighting it for `.next`.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Pixel art must never be resampled, and skipping the optimizer keeps
   // Vercel/Cloudflare behavior identical (see docs/ARCHITECTURE.md).
   images: { unoptimized: true },
   async headers() {
     return [
+      {
+        source: "/assets/game/:asset*.glb.gz",
+        headers: [
+          { key: "Content-Type", value: "application/gzip" },
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
       {
         source: "/:path*",
         headers: securityHeaders,

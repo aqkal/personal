@@ -47,7 +47,7 @@ export default function OgImage() {
           }}
         >
           <span>software engineer</span>
-          <span style={{ color: "#4ef08a" }}>×</span>
+          <span style={{ color: "#a78bfa" }}>×</span>
           <span>world builder</span>
         </div>
         <div
@@ -56,7 +56,7 @@ export default function OgImage() {
             display: "flex",
             gap: 26,
             fontSize: 25,
-            color: "#53d8ff",
+            color: "#5fd4c8",
           }}
         >
           <span>walkable 3D Brisbane campus</span>

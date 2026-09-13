@@ -2,9 +2,12 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { GreatCourt } from "./buildings";
+import { usePageVisible } from "@/lib/use-page-visible";
+import { GreatCourt } from "./uq-campus";
 import { hasSoftwareGL } from "./detect";
+import { SUN_POSITION } from "./materials";
 import { Ground, Paths, SkyDome, TreeField } from "./nature";
 import { GREAT_COURT } from "./layout";
 
@@ -15,16 +18,16 @@ import { GREAT_COURT } from "./layout";
  * static frame under reduced motion.
  */
 
-const CENTER = { x: GREAT_COURT.center.x, y: 2.5, z: GREAT_COURT.center.z };
+const CENTER = { x: GREAT_COURT.center.x, y: 3.5, z: GREAT_COURT.center.z };
 
 function OrbitRig() {
   const angle = useRef(0.6);
   useFrame(({ camera }, dt) => {
     angle.current += Math.min(dt, 0.05) * 0.07;
-    const r = 30;
+    const r = 58;
     camera.position.set(
       CENTER.x + Math.sin(angle.current) * r,
-      15,
+      32,
       CENTER.z + Math.cos(angle.current) * r,
     );
     camera.lookAt(CENTER.x, CENTER.y, CENTER.z);
@@ -38,6 +41,7 @@ export function HeroDiorama({ className }: { className?: string }) {
   const [inView, setInView] = useState(false);
   const [softGL] = useState(hasSoftwareGL);
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const visible = usePageVisible();
 
   // mount only once the panel is visible and the main thread is idle;
   // software rasterizers keep the gradient placeholder instead
@@ -45,21 +49,32 @@ export function HeroDiorama({ className }: { className?: string }) {
     if (softGL) return;
     const el = wrapRef.current;
     if (!el) return;
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
     const io = new IntersectionObserver(
       ([entry]) => {
         setInView(entry.isIntersecting);
-        if (entry.isIntersecting && !mounted) {
-          const idle =
-            "requestIdleCallback" in window
-              ? window.requestIdleCallback
-              : (cb: () => void) => window.setTimeout(cb, 200);
-          idle(() => setMounted(true));
+        if (
+          entry.isIntersecting &&
+          !mounted &&
+          idleHandle === null &&
+          timeoutHandle === null
+        ) {
+          if ("requestIdleCallback" in window) {
+            idleHandle = window.requestIdleCallback(() => setMounted(true));
+          } else {
+            timeoutHandle = globalThis.setTimeout(() => setMounted(true), 200);
+          }
         }
       },
       { threshold: 0.15 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      if (idleHandle !== null) window.cancelIdleCallback(idleHandle);
+      if (timeoutHandle !== null) globalThis.clearTimeout(timeoutHandle);
+    };
   }, [mounted, softGL]);
 
   return (
@@ -74,18 +89,27 @@ export function HeroDiorama({ className }: { className?: string }) {
       {mounted && (
         <Canvas
           dpr={[1, 1.5]}
-          frameloop={reduced ? "demand" : inView ? "always" : "never"}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-          camera={{ fov: 42, near: 1, far: 300, position: [CENTER.x + 18, 15, CENTER.z + 24] }}
+          frameloop={reduced || !inView || !visible ? "demand" : "always"}
+          gl={{
+            antialias: true,
+            powerPreference: "high-performance",
+            alpha: false,
+            stencil: false,
+          }}
+          camera={{ fov: 42, near: 1, far: 300, position: [CENTER.x + 33, 32, CENTER.z + 48] }}
           className="!absolute !inset-0"
+          onCreated={({ gl, camera }) => {
+            gl.toneMapping = THREE.NeutralToneMapping;
+            camera.lookAt(CENTER.x, CENTER.y, CENTER.z);
+          }}
         >
           <hemisphereLight intensity={0.95} color="#cfe6ff" groundColor="#7ba86a" />
-          <directionalLight position={[45, 60, -35]} intensity={1.9} color="#fff4de" />
+          <directionalLight position={SUN_POSITION} intensity={1.9} color="#fff4de" />
           <SkyDome />
           <Ground />
           <Paths />
           <GreatCourt />
-          <TreeField />
+          <TreeField reducedMotion={reduced} />
           {!reduced && <OrbitRig />}
         </Canvas>
       )}

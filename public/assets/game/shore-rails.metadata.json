@@ -1,0 +1,28 @@
+{
+  "revision": "6d21983463ce",
+  "coordinateSystem": "Three.js Y-up metres, +Z south",
+  "source": "assets-source/shore-rails.blend",
+  "review": "assets-source/shore-rails-review.png",
+  "segments": 147,
+  "posts": 149,
+  "accessGaps": [
+    {
+      "id": "ferry-pier",
+      "edge": "positive-z",
+      "from": -16.3,
+      "to": -11.7
+    },
+    {
+      "id": "pedestrian-bridge",
+      "edge": "positive-z",
+      "from": -3.2,
+      "to": 3.2
+    }
+  ],
+  "assetBytes": 901836,
+  "gzipBytes": 92184,
+  "meshes": 3,
+  "materials": 3,
+  "triangles": 34844,
+  "vertices": 18932
+}

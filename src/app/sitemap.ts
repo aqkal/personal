@@ -4,15 +4,7 @@ import { getAllPosts } from "@/lib/blog";
 import { siteUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticRoutes = [
-    "",
-    "/about",
-    "/experience",
-    "/projects",
-    "/blog",
-    "/contact",
-    "/resume",
-  ].map((path) => ({
+  const staticRoutes = ["", "/blog", "/contact", "/resume"].map((path) => ({
     url: `${siteUrl}${path}`,
     changeFrequency: "monthly" as const,
     priority: path === "" ? 1 : 0.7,
@@ -28,10 +20,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((p) => !p.meta.draft)
     .map((p) => ({
       url: `${siteUrl}/blog/${p.slug}`,
-      lastModified: p.meta.date,
+      lastModified: p.meta.updated ?? p.meta.date,
       changeFrequency: "yearly" as const,
       priority: 0.5,
     }));
 
-  return [...staticRoutes, ...projectPages, ...posts];
+  const entries = [...staticRoutes, ...projectPages, ...posts];
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    if (seen.has(entry.url)) return false;
+    seen.add(entry.url);
+    return true;
+  });
 }

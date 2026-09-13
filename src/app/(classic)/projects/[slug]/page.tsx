@@ -23,6 +23,7 @@ export async function generateMetadata({
   return {
     title: `${project.name} · Case study`,
     description: project.tagline,
+    alternates: { canonical: `/projects/${project.id}` },
   };
 }
 
@@ -68,13 +69,13 @@ export default async function ProjectCasePage({
 
   return (
     <article className="mx-auto max-w-3xl">
-      <Link href="/projects" className="text-sm text-muted hover:text-ink">
+      <Link href="/?view=portfolio#projects" className="text-sm text-muted hover:text-ink">
         ← All projects
       </Link>
 
       <header className="mt-6">
-        <p className="font-mono text-xs tracking-[0.2em] text-muted">
-          {project.context.toUpperCase()} · {project.year}
+        <p className="microlabel font-mono text-muted">
+          {project.context} · {project.year}
         </p>
         <h1 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
           {project.name}
@@ -92,7 +93,7 @@ export default async function ProjectCasePage({
                 href={project.links.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan hover:underline"
+                className="text-accent hover:underline"
               >
                 View the code ↗
               </a>
@@ -102,7 +103,7 @@ export default async function ProjectCasePage({
                 href={project.links.live}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan hover:underline"
+                className="text-accent hover:underline"
               >
                 Visit live ↗
               </a>
@@ -110,6 +111,7 @@ export default async function ProjectCasePage({
           </div>
         )}
       </header>
+
 
       <div className="mt-10 space-y-4">
         {project.caseStudy ? (
@@ -145,22 +147,22 @@ export default async function ProjectCasePage({
       </Reveal>
 
       {/* prev / next */}
-      <nav className="mt-14 grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
+      <nav aria-label="Project navigation" className="mt-14 grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
         <Link
           href={`/projects/${prev.id}`}
-          className="card-fx group rounded-2xl border border-line bg-surface p-4 hover:border-neon/40"
+          className="card-fx group rounded-2xl border border-line bg-surface p-4 hover:border-accent/40"
         >
           <p className="text-xs text-muted">← Previous</p>
-          <p className="mt-1 font-display font-semibold group-hover:text-neon">
+          <p className="mt-1 font-display font-semibold group-hover:text-accent">
             {prev.name}
           </p>
         </Link>
         <Link
           href={`/projects/${next.id}`}
-          className="card-fx group rounded-2xl border border-line bg-surface p-4 text-right hover:border-neon/40"
+          className="card-fx group rounded-2xl border border-line bg-surface p-4 text-right hover:border-accent/40"
         >
           <p className="text-xs text-muted">Next →</p>
-          <p className="mt-1 font-display font-semibold group-hover:text-neon">
+          <p className="mt-1 font-display font-semibold group-hover:text-accent">
             {next.name}
           </p>
         </Link>

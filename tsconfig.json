@@ -39,10 +39,20 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-prof/types/**/*.ts",
+    ".next-prof/dev/types/**/*.ts",
+    ".cf-build/.next/types/**/*.ts",
+    ".cf-build/.next/dev/types/**/*.ts",
+    ".next-rebuild/types/**/*.ts",
+    ".next-rebuild/dev/types/**/*.ts"
   ],
   "exclude": [
+    "inspo",
+    "assets-source",
     "node_modules",
-    ".open-next"
+    ".open-next",
+    ".cf-build/.open-next",
+    ".cf-build/.next/standalone"
   ]
 }

@@ -39,8 +39,23 @@ const slug = z
   .string()
   .regex(/^[a-z0-9-]+$/, "id must be a kebab-case slug (a-z, 0-9, -)");
 
+/**
+ * Every link in this file is rendered straight into an `href`, and `z.url()`
+ * accepts anything the URL constructor parses, including `javascript:`,
+ * `data:` and `vbscript:`. Content is repo-authored so this is not exploitable
+ * today, but the schema is the right place to guarantee it stays that way.
+ */
+const httpUrl = z
+  .url()
+  .refine(
+    (u) => u.startsWith("https://") || u.startsWith("http://"),
+    "must be an http(s) URL",
+  );
+
 /** "YYYY-MM" - formatted for display by src/lib/dates.ts */
 const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "use YYYY-MM");
+/** Resume dates preserve year-only precision when a month is not supplied. */
+const resumeDate = z.union([yearMonth, z.string().regex(/^\d{4}$/, "use YYYY or YYYY-MM")]);
 
 export const experienceSchema = z.object({
   id: slug,
@@ -48,12 +63,21 @@ export const experienceSchema = z.object({
   role: z.string().min(1).max(80),
   team: z.string().max(80).optional(),
   location: z.string().max(80).optional(),
-  start: yearMonth,
+  start: resumeDate,
   /** null = present */
-  end: yearMonth.nullable(),
+  end: resumeDate.nullable(),
   summary: z.string().min(1).max(300),
   highlights: z.array(z.string().min(1).max(300)).min(1).max(8),
   tech: z.array(z.string().min(1).max(40)).max(16),
+  /** One clause describing the work, used after "By day I am a {role} at {company}". */
+  blurb: z.string().max(120).optional(),
+  /** Optional outbound links, e.g. the company's own site. */
+  links: z
+    .object({
+      live: httpUrl.optional(),
+      github: httpUrl.optional(),
+    })
+    .optional(),
   world: worldMetaSchema,
 });
 export type Experience = z.infer<typeof experienceSchema>;
@@ -71,8 +95,8 @@ export const projectSchema = z.object({
   tech: z.array(z.string().min(1).max(40)).min(1).max(16),
   links: z
     .object({
-      github: z.url().optional(),
-      live: z.url().optional(),
+      github: httpUrl.optional(),
+      live: httpUrl.optional(),
     })
     .optional(),
   featured: z.boolean().default(false),
@@ -93,8 +117,8 @@ export const educationSchema = z.object({
   institution: z.string().min(1).max(120),
   degree: z.string().min(1).max(120),
   location: z.string().max(80).optional(),
-  start: yearMonth,
-  end: yearMonth.nullable(),
+  start: resumeDate,
+  end: resumeDate.nullable(),
   highlights: z.array(z.string().min(1).max(300)).min(1).max(8),
   world: worldMetaSchema,
 });
@@ -115,6 +139,13 @@ export const certificationSchema = z.object({
 });
 export type Certification = z.infer<typeof certificationSchema>;
 
+export const campusLandmarkSchema = z.object({
+  id: slug,
+  title: z.string().min(1).max(100),
+  description: z.string().min(1).max(500),
+  source: httpUrl,
+});
+
 export const profileSchema = z.object({
   /** Display name used across the site, resume, and SEO. */
   name: z.string().min(1).max(80),
@@ -123,8 +154,8 @@ export const profileSchema = z.object({
   /** Shown publicly on the site (it is on the resume anyway). */
   email: z.email(),
   socials: z.object({
-    github: z.url(),
-    linkedin: z.url(),
+    github: httpUrl,
+    linkedin: httpUrl,
   }),
   /** One-liner describing current availability, shown on /contact. */
   availability: z.string().max(160).optional(),
@@ -138,6 +169,7 @@ export type Profile = z.infer<typeof profileSchema>;
 export const blogFrontmatterSchema = z.object({
   title: z.string().min(1).max(120),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "use YYYY-MM-DD"),
+  updated: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "use YYYY-MM-DD").optional(),
   description: z.string().min(1).max(240),
   tags: z.array(z.string().min(1).max(30)).max(8).default([]),
   draft: z.boolean().default(false),

@@ -1,113 +1,115 @@
 "use client";
 
-import { useThree } from "@react-three/fiber";
+import { useStore } from "@react-three/fiber";
 import { useEffect } from "react";
-import { cameraOrbit, runtime } from "./state";
+import { cameraOrbit, joystick, playerHeading, playerMotion, runtime } from "./state";
 
-const PITCH_MIN = 0.28;
-const PITCH_MAX = 1.15;
-const DIST_MIN = 7;
-const DIST_MAX = 20;
-
-/**
- * Look-around controls for the third-person camera: drag anywhere on the
- * canvas to orbit, wheel or pinch to zoom. Any input also skips the intro
- * fly-in. Writes straight into cameraOrbit; Player consumes it per frame.
- */
+/** One gesture model keeps orbit, pointer capture, and pinch independent. */
 export function CameraControls() {
-  const gl = useThree((s) => s.gl);
-
+  const store = useStore();
   useEffect(() => {
-    const el = gl.domElement;
-    let dragging = false;
-    let lastX = 0;
-    let lastY = 0;
-    let pinchDist = 0;
-
-    const skipIntro = () => {
-      if (cameraOrbit.intro < 1) cameraOrbit.intro = 1;
+    const el = store.getState().gl.domElement;
+    const pointers = new Map<number, { x: number; y: number }>();
+    const canMove = () => runtime.playing && !runtime.paused && runtime.focused;
+    const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+    const pinch = () => {
+      const [a, b] = [...pointers.values()];
+      return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
     };
-
-    function onPointerDown(e: PointerEvent) {
-      skipIntro();
-      if (runtime.paused) return;
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
+    function onDown(e: PointerEvent) {
+      if (!canMove() || (e.pointerType === "mouse" && e.button !== 0)) return;
+      cameraOrbit.intro = 1;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
     }
-    function onPointerMove(e: PointerEvent) {
-      if (!dragging || runtime.paused) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      cameraOrbit.yaw -= dx * 0.0055;
-      cameraOrbit.pitch = Math.min(
-        PITCH_MAX,
-        Math.max(PITCH_MIN, cameraOrbit.pitch + dy * 0.004),
-      );
-    }
-    function onPointerUp(e: PointerEvent) {
-      dragging = false;
-      try {
-        el.releasePointerCapture(e.pointerId);
-      } catch {
-        // pointer already released
+    function onMove(e: PointerEvent) {
+      const previous = pointers.get(e.pointerId);
+      if (!previous || !canMove()) return;
+      const before = pinch();
+      const dx = e.clientX - previous.x;
+      const dy = e.clientY - previous.y;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size > 1) {
+        cameraOrbit.targetDist = clamp(cameraOrbit.targetDist - (pinch() - before) * 0.035, 5.5, 22);
+      } else {
+        cameraOrbit.targetYaw -= dx * 0.005;
+        cameraOrbit.targetPitch = clamp(cameraOrbit.targetPitch + dy * 0.0035, 0.28, 1.18);
       }
+    }
+    function onUp(e: PointerEvent) {
+      pointers.delete(e.pointerId);
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      if (!pointers.size) el.style.cursor = "grab";
+    }
+    function clearPointers() {
+      for (const pointerId of pointers.keys()) {
+        if (el.hasPointerCapture(pointerId)) el.releasePointerCapture(pointerId);
+      }
+      pointers.clear();
+      el.style.cursor = "grab";
     }
     function onWheel(e: WheelEvent) {
+      if (!canMove()) return;
       e.preventDefault();
-      skipIntro();
-      cameraOrbit.dist = Math.min(
-        DIST_MAX,
-        Math.max(DIST_MIN, cameraOrbit.dist + e.deltaY * 0.012),
-      );
+      cameraOrbit.intro = 1;
+      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1);
+      cameraOrbit.targetDist = clamp(cameraOrbit.targetDist + clamp(delta, -150, 150) * 0.012, 5.5, 22);
     }
-    function onTouchStart(e: TouchEvent) {
-      if (e.touches.length === 2) {
-        pinchDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY,
-        );
+    function onKey(e: KeyboardEvent) {
+      if (!canMove() || e.ctrlKey || e.metaKey || e.altKey || (e.target as HTMLElement)?.closest("input,textarea,select,button,a,[contenteditable]")) return;
+      if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyR"].includes(e.code)) {
+        e.preventDefault();
+        cameraOrbit.intro = 1;
+      }
+      if (e.code === "KeyR") {
+        cameraOrbit.targetYaw = playerHeading.value - Math.PI;
+        cameraOrbit.targetPitch = 0.68;
+        cameraOrbit.targetDist = 13;
       }
     }
-    function onTouchMove(e: TouchEvent) {
-      if (e.touches.length === 2 && pinchDist > 0) {
-        const d = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY,
-        );
-        cameraOrbit.dist = Math.min(
-          DIST_MAX,
-          Math.max(DIST_MIN, cameraOrbit.dist - (d - pinchDist) * 0.03),
-        );
-        pinchDist = d;
+    function onBlur() {
+      runtime.focused = false;
+      clearPointers();
+      playerMotion.vx = playerMotion.vz = 0;
+      joystick.x = joystick.y = 0;
+      joystick.active = joystick.sprint = false;
+      el.style.cursor = "grab";
+      for (const code of ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight", "KeyE", "Enter"]) {
+        window.dispatchEvent(new KeyboardEvent("keyup", { code, key: code }));
       }
     }
-    function onKeyDown() {
-      skipIntro();
-    }
-
-    el.addEventListener("pointerdown", onPointerDown);
-    el.addEventListener("pointermove", onPointerMove);
-    el.addEventListener("pointerup", onPointerUp);
-    el.addEventListener("pointercancel", onPointerUp);
-    el.addEventListener("wheel", onWheel, { passive: false });
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      el.removeEventListener("pointermove", onPointerMove);
-      el.removeEventListener("pointerup", onPointerUp);
-      el.removeEventListener("pointercancel", onPointerUp);
-      el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("keydown", onKeyDown);
+    const onFocus = () => { runtime.focused = true; };
+    const onVisibility = () => {
+      if (document.hidden || !document.hasFocus()) onBlur();
+      else onFocus();
     };
-  }, [gl]);
-
+    el.style.touchAction = "none";
+    el.style.cursor = "grab";
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    el.addEventListener("lostpointercapture", onUp);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    onVisibility();
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
+      el.removeEventListener("lostpointercapture", onUp);
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearPointers();
+    };
+  }, [store]);
   return null;
 }

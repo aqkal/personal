@@ -25,6 +25,45 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Verify contact protections
+        run: npm run test:contact
+
+      - name: Verify world and arcade logic
+        run: npm run test:world
+
+      - name: Verify physics and travel
+        run: npm run test:physics
+
+      - name: Verify optimized collision, transport and route work
+        run: npm run test:frame-cpu
+
+      - name: Verify world startup lifecycle
+        run: npm run test:startup
+
+      - name: Verify interpolated transport presentation
+        run: npm run test:travel-presentation
+
+      - name: Verify scooter wheel rendering and recovery
+        run: npm run test:scooter-render
+
+      - name: Verify drift physics and skid trails
+        run: npm run test:drift
+
+      - name: Verify building and vehicle clearance
+        run: npm run test:buildings
+
+      - name: Verify shoreline barriers and access
+        run: npm run test:shore
+
+      - name: Verify moving-camera framing
+        run: npm run test:camera-follow
+
+      - name: Validate authored game assets
+        run: npm run validate:assets
+
+      - name: Verify compressed model loading
+        run: npm run test:gltf
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -33,14 +72,19 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: https://example.com
 
+      - name: Verify production pages and headers
+        run: npm run test:http
+
       - name: Build (Cloudflare Workers target)
         run: npm run build:cf
         env:
           NEXT_PUBLIC_SITE_URL: https://example.com
 
-      - name: Dependency audit (report)
+      - name: Verify local Cloudflare Worker
+        run: npm run test:http -- --cloudflare
+
+      - name: Dependency audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       # To auto-deploy to Cloudflare on pushes to main, add the repo secrets
       # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, then uncomment:
