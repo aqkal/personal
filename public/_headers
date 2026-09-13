@@ -1,0 +1,7 @@
+# Cloudflare static assets bypass Next.js response headers.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/game/*.glb.gz
+  Content-Type: application/gzip
+  Cache-Control: public, max-age=0, must-revalidate
